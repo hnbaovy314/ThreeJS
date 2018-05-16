@@ -1,0 +1,30 @@
+{
+  "name": "chemistry-lab",
+  "version": "1.0.0",
+  "description": "A chemistry lab using Three.js",
+  "main": "main.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hnbaovy314/ThreeJS.git"
+  },
+  "keywords": [
+    "Chemistry",
+    "lab",
+    "threejs"
+  ],
+  "author": "Anonymous",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hnbaovy314/ThreeJS/issues"
+  },
+  "homepage": "https://github.com/hnbaovy314/ThreeJS#readme",
+  "dependencies": {
+    "three": "^0.92.0"
+  }
+}
