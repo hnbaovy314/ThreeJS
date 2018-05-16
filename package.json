@@ -31,6 +31,7 @@
     "debug": "^3.1.0",
     "express": "^4.16.3",
     "http-errors": "^1.6.3",
+    "mongodb": "^3.1.0-beta4",
     "three": "^0.92.0"
   },
   "devDependencies": {
