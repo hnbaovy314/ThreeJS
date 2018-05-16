@@ -26,6 +26,7 @@
   "homepage": "https://github.com/hnbaovy314/ThreeJS#readme",
   "dependencies": {
     "dat.gui": "^0.7.2",
+    "express": "^4.16.3",
     "three": "^0.92.0"
   },
   "devDependencies": {
