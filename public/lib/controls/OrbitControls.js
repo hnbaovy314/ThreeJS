@@ -62,6 +62,14 @@ THREE.OrbitControls = function ( object, domElement ) {
 	this.panSpeed = 1.0;
 	this.panningMode = THREE.ScreenSpacePanning; // alternate THREE.HorizontalPanning
 	this.keyPanSpeed = 7.0;	// pixels moved per arrow key push
+	this.horizontalPanningBound = {
+		left: -15,
+		right: 15
+	};
+	this.verticalPanningBound = {
+		top: 15,
+		down: -15
+	};
 
 	// Set to true to automatically rotate around the target
 	// If auto-rotate is enabled, you must call controls.update() in your animation loop
@@ -170,6 +178,18 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 			// move target to panned location
 			scope.target.add( panOffset );
+			// if (scope.target.x > this.horizontalPanningBound.right) {
+			// 	scope.target.setX(this.horizontalPanningBound.right);
+			// }
+			// if (scope.target.x < this.horizontalPanningBound.left) {
+			// 	scope.target.setX(this.horizontalPanningBound.left);
+			// }
+			// if (scope.target.y > this.verticalPanningBound.top) {
+			// 	scope.target.setY(this.verticalPanningBound.top);
+			// }
+			// if (scope.target.y < this.verticalPanningBound.down) {
+			// 	scope.target.setY(this.verticalPanningBound.down);
+			// }
 
 			offset.setFromSpherical( spherical );
 

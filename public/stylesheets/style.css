@@ -12,14 +12,12 @@ h1, h2 {
 
 #preview-panel {
     position: absolute;
-    opacity: 0;
     top: 0px;
     left: 0px;
     transition: all 0.3s ease-out;
     pointer-events: none;
     padding: 10px;
-
-    background: #2C3E50;
+    background: #1A1A1A;
     color: #F2F2F2;
 }
 
