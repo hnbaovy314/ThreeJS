@@ -10,6 +10,7 @@ h1, h2 {
     margin: 0;
 }
 
+/* CSS for Preview Panel */
 #preview-panel {
     position: absolute;
     top: 0px;
@@ -32,4 +33,88 @@ h1, h2 {
     padding-left: 20px;
     font-size: 13px;
     line-height: 1.5;
+}
+
+#data-screen {
+    position: absolute;
+    top: 100vh;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    width: 100vw;
+    height: 100vh;
+    transition: all 0.3s ease-out;
+}
+
+/* CSS for Data Screen */
+#data-screen #ds-close-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 0;
+    overflow: hidden;
+    background: #C4C4C4;
+    border-radius: 2px;
+    border: solid 4px #F2F2F2;
+    transition: all 0.3s ease-out;
+    cursor: pointer;
+
+    width: 20px;
+    height: 20px;
+}
+
+#data-screen #ds-close-button:hover {
+    background: #1A1A1A;
+}
+
+#data-screen #ds-close-button b {
+    display: block;
+    position: absolute;
+    height: 0;
+    width: 0;
+    padding: 0;
+    margin: 0;
+    border: solid 10px rgba(242, 242, 242, 0);
+}
+
+#data-screen #ds-close-button b:nth-child(1){
+    border-top-color: #F2F2F2;
+    top: -2px;
+}
+#data-screen #ds-close-button b:nth-child(2){
+    border-left-color: #F2F2F2;
+    left: -2px;
+}
+#data-screen #ds-close-button b:nth-child(3){
+    border-bottom-color: #F2F2F2;
+    bottom: -2px;
+}
+#data-screen #ds-close-button b:nth-child(4){
+    border-right-color: #F2F2F2;
+    right: -2px;
+}
+
+#data-screen #ds-left-column {
+    margin: 0;
+    position: absolute;
+    top: 0;
+    width: 20vw;
+    height: 100vh;
+}
+
+#data-screen #ds-right-column {
+    margin: 0;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20vw;
+    height: 100vh;
+}
+
+#data-screen #ds-er-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
 }
