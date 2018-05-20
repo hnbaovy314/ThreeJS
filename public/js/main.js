@@ -1,11 +1,21 @@
 var demoData = [
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+];
+
+var demoTable = [
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+    [3, 4, 0, 0, 0, 0, 0, 0, 0, 5, 6, 7, 8, 9, 10],
+    [11, 12, 0, 0, 0, 0, 0, 0, 0, 13, 14, 15, 16, 17, 18],
+    [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
 ];
 
 var container, stats;
@@ -53,14 +63,14 @@ function init() {
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf2f2f2);
-    
+    scene.background = new THREE.Color(0x644d52);
+
     raycaster = new THREE.Raycaster();
 
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0xF2F2F2, 1);
+    renderer.setClearColor(0x644d52, 1);
     container.appendChild(renderer.domElement);
 
     stats = new Stats();
@@ -68,13 +78,15 @@ function init() {
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.1;
+    controls.dampingFactor = 0.1; //give a sense of weight to the controls
     controls.rotateSpeed = 0.25;
     controls.zoomSpeed = 5;
     controls.minDistance = 10;
     controls.maxDistance = 40;
+    //orbit vertically
     controls.maxPolarAngle = Math.PI * 2 / 3;
     controls.minPolarAngle = Math.PI / 3;
+    //orbit horizontally
     controls.maxAzimuthAngle = Math.PI / 4;
     controls.minAzimuthAngle = -Math.PI / 4;
     controls.enablePan = false;
@@ -125,7 +137,7 @@ function getElement(size) {
 
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#1A1A1A";
+    ctx.fillStyle = "#A49A87";
     // Atomic Number
     ctx.font = "bold 32pt helvetica";
     ctx.fillText("69", canvasSize / 2, canvasSize / 7);
@@ -169,7 +181,7 @@ function getTableHeader(width, positionY) {
 
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#1A1A1A";
+    ctx.fillStyle = "#A49A87";
     ctx.font = "bold 64pt helvetica";
     ctx.fillText("PERIODIC TABLE OF ELEMENTS", canvas.width / 2, canvas.height / 2);
     ctx.font = "bold 28pt helvetica";
@@ -184,7 +196,7 @@ function getTableHeader(width, positionY) {
         side: THREE.DoubleSide,
         transparent: true
     });
-    
+
     var mesh = new THREE.Mesh(geometry, material);
 
     mesh.position.x = 0;
@@ -201,11 +213,11 @@ function getTableBorder(width, height) {
         transparent: true
     });
     var edges = new THREE.EdgesGeometry(geometry);
-    var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x1A1A1A}));
+    var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0xA49A87}));
     line.material.depthTest = false;
     line.material.opacity = 0.25;
     line.material.transparent = true;
-    
+
     var mesh = new THREE.Mesh(geometry, material);
     mesh.add(line);
 
@@ -270,7 +282,7 @@ function animate() {
     controls.update();
 }
 
-function render() {       
+function render() {
     // find intersections
     raycaster.setFromCamera(mouse, camera);
     var intersects = raycaster.intersectObjects(periodicTable.children);
@@ -280,7 +292,7 @@ function render() {
                 INTERSECTED.children[0].material.opacity = 0.25;
                 hidePreviewPanel();
             }
-            
+
             INTERSECTED = intersects[0].object;
             INTERSECTED.children[0].material.opacity = 1;
             getPreviewPanel();
@@ -293,6 +305,6 @@ function render() {
 
         INTERSECTED = null;
     }
-    
+
     renderer.render(scene, camera);
 }

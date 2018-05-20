@@ -17,8 +17,8 @@ h1, h2 {
     transition: all 0.3s ease-out;
     pointer-events: none;
     padding: 10px;
-    background: #1A1A1A;
-    color: #F2F2F2;
+    background: #A49A87;
+    color: #644D52;
 }
 
 #preview-panel h1.symbol {
