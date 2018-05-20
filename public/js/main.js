@@ -18,9 +18,9 @@ var demoTable = [
     [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
 ];
 
-var container, stats, raycaster;
-var currentCamera, defaultCamera, currentScene, currentRenderer, currentControls;
-var tableScene, tableRenderer, tableControls;
+var container, stats, raycaster, meshArr = []; // Array to hold all meshes that needs disposing
+var currentCamera, defaultCamera, currentScene, currentRenderer, currentControls, defaultControls;
+var tableScene, tableRenderer;
 var mouse = new THREE.Vector2(), previewMouse = new THREE.Vector2(),
     INTERSECTED;
 
@@ -85,10 +85,9 @@ function init() {
         70,
         window.innerWidth / window.innerHeight,
         1,
-        1000
+        100
     );
-    defaultCamera.position.z = 35;
-    defaultCamera.lookAt(new THREE.Vector3(0, 0, 0));
+    defaultCamera.position.z = 0;
     currentCamera = defaultCamera;
 
     // Init for periodic table scene as the default scene
@@ -111,20 +110,21 @@ function init() {
     raycaster = new THREE.Raycaster();
     currentRaycastTarget = periodicTable;
 
-    // Init controls for periodic table scene
-    tableControls = new THREE.OrbitControls(defaultCamera, tableRenderer.domElement);
-    tableControls.enableDamping = true;
-    tableControls.dampingFactor = 0.1;
-    tableControls.rotateSpeed = 0.25;
-    tableControls.zoomSpeed = 5;
-    tableControls.minDistance = 10;
-    tableControls.maxDistance = 40;
-    tableControls.maxPolarAngle = Math.PI * 5 / 6;
-    tableControls.minPolarAngle = Math.PI / 6;
-    tableControls.maxAzimuthAngle = Math.PI / 4;
-    tableControls.minAzimuthAngle = -Math.PI / 4;
-    tableControls.enablePan = false;
-    currentControls = tableControls;
+    // Init controls for periodic table scene (also the default controls)
+    defaultControls = new THREE.OrbitControls(defaultCamera, tableRenderer.domElement);
+    defaultControls.enableDamping = true;
+    defaultControls.dampingFactor = 0.1;
+    defaultControls.rotateSpeed = 0.25;
+    defaultControls.zoomSpeed = 5;
+    defaultControls.minDistance = 10;
+    defaultControls.maxDistance = 60;
+    defaultControls.maxPolarAngle = Math.PI * 5 / 6;
+    defaultControls.minPolarAngle = Math.PI / 6;
+    defaultControls.maxAzimuthAngle = Math.PI / 4;
+    defaultControls.minAzimuthAngle = -Math.PI / 4;
+    defaultControls.enablePan = false;
+    defaultControls.target.set(0, 0, -50);
+    currentControls = defaultControls;
 
     // Init for element detail data screen
     // with different camera, scene, renderer and controls
@@ -156,6 +156,23 @@ function init() {
     elementControls.minDistance = 20;
     elementControls.maxDistance = 80;
     elementControls.noPan = true;
+
+    var spotLight1 = new THREE.SpotLight(0xF2F2F2);
+    spotLight1.position.set(0, 0, 10);
+    spotLight1.penumbra = 1;
+    spotLight1.lookAt = new THREE.Vector3(0, 0, 0);
+    spotLight1.castShadow = true;
+    spotLight1.intensity = 1;
+
+    var spotLight2 = new THREE.SpotLight(0xF2F2F2);
+    spotLight2.position.set(0, 0, -10);
+    spotLight2.penumbra = 1;
+    spotLight2.lookAt = new THREE.Vector3(0, 0, 0);
+    spotLight2.castShadow = true;
+    spotLight2.intensity = 1;
+
+    elementScene.add(spotLight1);
+    elementScene.add(spotLight2);
 
     // Performance Stats
     stats = new Stats();
@@ -192,6 +209,9 @@ function onTableBoxClick(event) {
     event.preventDefault();
 
     if (INTERSECTED) {
+        currentControls.reset();
+        currentControls.update();
+
         // Return the raycast, INTERSECTED and preview panel to clean state
         currentRaycastTarget = null;
         INTERSECTED.children[0].material.opacity = 0.25;
@@ -205,11 +225,12 @@ function onTableBoxClick(event) {
         getElementModel();
 
         // Switch to element model camera, scene & ...
-        elementCamera.position.z = 60;
         currentCamera = elementCamera;
         currentScene = elementScene;
         currentRenderer = elementRenderer;
+
         currentControls = elementControls;
+        currentCamera.position.z = 60;
     }
 }
 
@@ -217,27 +238,28 @@ function onTableBoxClick(event) {
 function onElementModelCloseButtonClick(event) {
     event.preventDefault();
 
+    currentControls.reset();
+    currentControls.update();
+
     dataScreen.style.transform = 'translateY(100vh)';
     dataScreen.style.opacity = 0;
-
-    // Remove element model from elementScene
-    elementScene.remove(elementScene.getObjectByName('Element Model'));
 
     // Switch to table camera, scene & ...
     currentCamera = defaultCamera;
     currentScene = tableScene;
     currentRenderer = tableRenderer;
-    currentControls = tableControls;
+    currentControls = defaultControls;
     currentRaycastTarget = periodicTable;
 
-    currentCamera.lookAt(new THREE.Vector3(0, 0, 0));
-    currentCamera.position.x = 0;
-    currentCamera.position.y = 0;
-    currentCamera.position.z = 20;
+    currentControls.target.set(0, 0, -50);
+    currentCamera.position.z = -15;
     new TWEEN.Tween(currentCamera.position)
-        .to({z: 35}, 1000)
+        .to({z: 0}, 1000)
         .easing(TWEEN.Easing.Exponential.Out)
         .start();
+
+    // Remove element model from elementScene
+    destroyElementModel();
 }
 
 // Get individual element
@@ -334,24 +356,6 @@ function getTableHeader(width, positionY) {
     return mesh;
 }
 
-function getTableBorder(width, height) {
-    var geometry = new THREE.PlaneBufferGeometry(width * 1.25, height * 1.5, 1);
-    var material = new THREE.MeshBasicMaterial({
-        opacity: 0,
-        transparent: true
-    });
-    var edges = new THREE.EdgesGeometry(geometry);
-    var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0xA49A87}));
-    line.material.depthTest = false;
-    line.material.opacity = 0.25;
-    line.material.transparent = true;
-
-    var mesh = new THREE.Mesh(geometry, material);
-    mesh.add(line);
-
-    return mesh;
-}
-
 // Get periodic table grid
 function getElementGrid(table) {
     var group = new THREE.Group();
@@ -367,10 +371,11 @@ function getElementGrid(table) {
         }
     }
 
-    group.position.z += 1;
+    group.add(getTableHeader(table[0].length * gridSeparation, gridSeparation * table.length));
 
-    tableScene.add(getTableHeader(table[0].length * gridSeparation, gridSeparation * table.length));
-    tableScene.add(getTableBorder(table[0].length * gridSeparation, gridSeparation * table.length));
+    group.position.z = -50;
+
+    tableScene.add(group);
 
     return group;
 }
@@ -411,9 +416,9 @@ function getElementModelOrbitLayer(electronNumber, radius, tilt) {
     var orbit = new THREE.Object3D();
     var mergedGeometry = new THREE.Geometry();
 
-    var geometry = new THREE.CircleGeometry(radius, 100);
-    geometry.vertices.shift();
-    var line = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({color: 0x1A1A1A}));
+    var orbitGeometry = new THREE.CircleGeometry(radius, 100);
+    orbitGeometry.vertices.shift();
+    var line = new THREE.LineSegments(orbitGeometry, new THREE.LineBasicMaterial({color: 0x1A1A1A}));
     line.material.depthTest = false;
     line.material.transparent = true;
 
@@ -430,14 +435,14 @@ function getElementModelOrbitLayer(electronNumber, radius, tilt) {
         count++;
 
         electronGeometry.translate(x, y, 0);
-
         mergedGeometry.merge(electronGeometry);
-
         electronGeometry.translate(-x, -y, 0);
     }
 
+    var electronMesh = new THREE.Mesh(mergedGeometry, electronMaterial);
+
     orbit.add(line);
-    orbit.add(new THREE.Mesh(mergedGeometry, electronMaterial));
+    orbit.add(electronMesh);
 
     var tween = new TWEEN.Tween(orbit.rotation)
         .to({z: '+' + Math.PI * 2}, 10000)
@@ -445,6 +450,9 @@ function getElementModelOrbitLayer(electronNumber, radius, tilt) {
         .start();
 
     orbitContainer.add(orbit);
+
+    meshArr.push(line);
+    meshArr.push(electronMesh);
 
     return orbitContainer;
 }
@@ -478,9 +486,7 @@ function getElementModel() {
         var z = radius * Math.cos(phi);
 
         geometry.translate(x, y, z);
-
         mergedProtonGeometry.merge(geometry);
-
         geometry.translate(-x, -y, -z);
     }
 
@@ -495,9 +501,7 @@ function getElementModel() {
         var z = radius * Math.cos(phi);
 
         geometry.translate(x, y, z);
-
         mergedNeutronGeometry.merge(geometry);
-
         geometry.translate(-x, -y, -z);
     }
 
@@ -508,42 +512,39 @@ function getElementModel() {
         transparent: true
     })
 
-    group.add(new THREE.Mesh(mergedProtonGeometry, protonMaterial));
-    group.add(new THREE.Mesh(mergedNeutronGeometry, neutronMaterial));
-    group.add(new THREE.Mesh(outerGeometry, outerMaterial));
+    var mergedProtonMesh = new THREE.Mesh(mergedProtonGeometry, protonMaterial)
+    var mergedNeutronMesh = new THREE.Mesh(mergedNeutronGeometry, neutronMaterial)
+    var outerMesh = new THREE.Mesh(outerGeometry, outerMaterial);
+
+    group.add(mergedProtonMesh);
+    group.add(mergedNeutronMesh);
+    group.add(outerMesh);
     group.add(
         // Get electron layer
         // Cứ cho chạy loop, tính số electron ở từng lớp rồi gọi hàm
         getElementModelOrbitLayer(8, radius + 7, 0)
     );
 
+    meshArr.push(mergedProtonMesh);
+    meshArr.push(mergedNeutronMesh);
+    meshArr.push(outerMesh);
+
     group.name = "Element Model";
     elementScene.add(group);
+}
 
-    var spotLight1 = new THREE.SpotLight(0xF2F2F2);
-    spotLight1.position.set(0, 0, (radius + 5));
-    spotLight1.penumbra = 1;
-    spotLight1.lookAt = group;
-    spotLight1.castShadow = true;
-    spotLight1.intensity = 1;
+function destroyElementModel() {
+    elementScene.remove(elementScene.getObjectByName('Element Model'));
 
-    var spotLight2 = new THREE.SpotLight(0xF2F2F2);
-    spotLight2.position.set(0, 0, -(radius + 5));
-    spotLight2.penumbra = 1;
-    spotLight2.lookAt = group;
-    spotLight2.castShadow = true;
-    spotLight2.intensity = 1;
-
-    elementScene.add(spotLight1);
-    elementScene.add(spotLight2);
+    for (var i = 0; i < meshArr.length; i++) {
+        meshArr[i].geometry.dispose();
+        meshArr[i].material.dispose();
+    }
 }
 
 function animate() {
     requestAnimationFrame(animate);
     render();
-    stats.update();
-    currentControls.update();
-    TWEEN.update();
 }
 
 function render() {
@@ -575,5 +576,8 @@ function render() {
         }
     }
 
+    stats.update();
+    currentControls.update();
+    TWEEN.update();
     currentRenderer.render(currentScene, currentCamera);
 }
