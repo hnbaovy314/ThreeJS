@@ -12,10 +12,16 @@ var demoData = [
 ];
 
 var demoTable = [
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-    [3, 4, 0, 0, 0, 0, 0, 0, 0, 5, 6, 7, 8, 9, 10],
-    [11, 12, 0, 0, 0, 0, 0, 0, 0, 13, 14, 15, 16, 17, 18],
-    [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+    [3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 7, 8, 9, 10],
+    [11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 14, 15, 16, 17, 18],
+    [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36],
+    [37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54],
+    [55, 56, 0, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86],
+    [87, 88, 0, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 0],
+    [0, 0, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 0]
 ];
 
 var container, stats, raycaster;
@@ -23,6 +29,7 @@ var currentCamera, defaultCamera, currentScene, currentRenderer, currentControls
 var tableScene, tableRenderer, tableControls;
 var mouse = new THREE.Vector2(), previewMouse = new THREE.Vector2(),
     INTERSECTED;
+// var data = require('./data')
 
 // Variable
 var periodicTable = [];
@@ -39,13 +46,11 @@ previewPanel.setAttribute('id', 'preview-panel');
 previewPanel.style.width = previewPanelSize + 'px';
 previewPanel.style.height = previewPanelSize + 'px';
 previewPanel.style.opacity = 0;
-previewPanel.innerHTML = '' +
-    '<h2>8 - Oxygen</h2>' +
-    '<ul>' +
-    '<li>Atomic Weight: <b>15.9994</b></li>' +
-    '<li>E.Config: <b>1s2 2s2 2p4</b></li>' +
-    '</ul>' +
-    '<h1 class="symbol">O</h1>';
+
+const orbit = ['1s', '2s', '2p', '3s', '3p', '3d', '4s', '4p', '4d', '5s', '5p',
+                '4f', '5d', '6s', '6p', '7s', '5f', '6d', '7p', '8s'];
+const orbitNum = [2, 2, 6, 2, 6, 10, 2, 6, 10, 2, 6,
+                  14, 10, 2, 6, 2, 14, 10, 6, 2];
 
 // Build data screen
 var elementCamera, elementScene, elementRenderer, elementControls; // Camera, scene, renderer & controls for element model
@@ -72,6 +77,22 @@ newElement.appendChild(document.createElement('b'));
 newElement.appendChild(document.createElement('b'));
 newElement.appendChild(document.createElement('b'));
 dataScreen.appendChild(newElement);
+
+function getAllElements() {
+  var result = [];
+  $.ajax({
+    url: '/getE',
+    type: 'GET',
+    async: false,
+    success: function(data) {
+      console.log("Data received");
+      result = data;
+    }
+  });
+  return result;
+}
+
+var elements = getAllElements();
 
 init();
 animate();
@@ -106,7 +127,7 @@ function init() {
     container.appendChild(previewPanel);
     container.appendChild(dataScreen);
 
-    currentScene.add(getElementGrid(demoData));
+    currentScene.add(getElementGrid(demoTable));
 
     raycaster = new THREE.Raycaster();
     currentRaycastTarget = periodicTable;
@@ -241,8 +262,9 @@ function onElementModelCloseButtonClick(event) {
 }
 
 // Get individual element
-function getElement(size) {
+function getElement(size, element) {
     var group = new THREE.Group();
+
 
     // Create canvas and write text on it
     var canvas = document.createElement('canvas');
@@ -256,16 +278,16 @@ function getElement(size) {
     ctx.fillStyle = "#A49A87";
     // Atomic Number
     ctx.font = "bold 32pt helvetica";
-    ctx.fillText("69", canvasSize / 2, canvasSize / 7);
+    ctx.fillText(element.z, canvasSize / 2, canvasSize / 7);
     // Symbol
     ctx.font = "bold 70pt helvetica";
-    ctx.fillText("Ah", canvasSize / 2, canvasSize / 2);
+    ctx.fillText(element.symbol, canvasSize / 2, canvasSize / 2);
     // Name
     ctx.font = "bold 28pt helvetica";
-    ctx.fillText("Ahihihium", canvasSize / 2, canvasSize / 1.25);
+    ctx.fillText(element.name, canvasSize / 2, canvasSize / 1.25);
     // Atomic Weight
     ctx.font = "bold 16pt helvetica";
-    ctx.fillText("69.696969", canvasSize / 2, canvasSize / 1.0875);
+    ctx.fillText(element.atomicWeight, canvasSize / 2, canvasSize / 1.0875);
 
     var texture = new THREE.Texture(canvas);
     texture.needsUpdate = true;
@@ -280,7 +302,8 @@ function getElement(size) {
     var boxGeometry = new THREE.BoxBufferGeometry(size, size, size / 2);
     var boxMaterial = new THREE.MeshBasicMaterial({
         opacity: 0,
-        transparent: true
+        transparent: true,
+        name: element.z
     });
     var edges = new THREE.EdgesGeometry(boxGeometry);
     var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x1A1A1A}));
@@ -352,17 +375,20 @@ function getTableBorder(width, height) {
     return mesh;
 }
 
+
 // Get periodic table grid
 function getElementGrid(table) {
     var group = new THREE.Group();
+    var k = 0;
 
     for (var i = 0; i < table.length; i++) {
         for (var j = 0; j < table[0].length; j++) {
             if (table[i][j]) {
-                var mesh = getElement(elementBoxSize);
+                var mesh = getElement(elementBoxSize, elements[table[i][j]-1]);
                 mesh.position.x = j * gridSeparation - (gridSeparation * (table[0].length - 1)) / 2;
                 mesh.position.y = -(i * gridSeparation + elementBoxSize / 2) + (gridSeparation * (table.length - 1)) / 2;
                 group.add(mesh);
+                k += 1;
             }
         }
     }
@@ -375,12 +401,47 @@ function getElementGrid(table) {
     return group;
 }
 
+function calcElectronConf(z) {
+  var eConfig = '';
+  var num = z;
+  for (i=0; i < orbit.length; i++) {
+    num -= orbitNum[i];
+    if (num <= 0){
+      var tmp = num + orbitNum[i];
+      eConfig = eConfig.concat(orbit[i], tmp.toString());
+      break;
+    }
+    else {
+      eConfig = eConfig.concat(orbit[i], orbitNum[i].toString(), ' ');
+    }
+  }
+  if (z > 10 & z <= 18){
+    eConfig = eConfig.replace('1s2 2s2 2p6 ', '[Ne]');
+  }
+  else if (z > 18 & z <= 36){
+    eConfig = eConfig.replace('1s2 2s2 2p6 3s2 3p6 ', '[Ar]');
+  }
+  else if (z > 36 & z <= 54){
+    eConfig = eConfig.replace('1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 ', '[Kr]');
+  }
+  else if (z > 54 & z <= 86){
+    eConfig = eConfig.replace('1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 ', '[Xe]');
+  }
+  else {
+    eConfig = eConfig.replace('1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 ', '[Rn]');
+  }
+
+  return eConfig;
+}
+
 // Get element preview data panel
-function getPreviewPanel() {
+function getPreviewPanel(z) {
     var width = window.innerWidth;
     var height = window.innerHeight;
     var size = previewPanelSize;
     var offset = size / 4;
+    var element = elements[z-1];
+    var eConfig = calcElectronConf(z);
 
     var newPos = {x: 0, y: 0};
     newPos.x = previewMouse.x + offset;
@@ -394,6 +455,13 @@ function getPreviewPanel() {
         newPos.y = height - size - 10;
     }
 
+    previewPanel.innerHTML = `
+        <h2>${element.z} - ${element.name}</h2>
+        <ul>
+        <li>Atomic Weight: <b>${element.atomicWeight}</b></li>
+        <li>E.Config: <b>${eConfig}</b></li>
+        </ul>
+        <h1 class="symbol">${element.symbol}</h1>`;
     previewPanel.style.transform = 'translate(' + newPos.x + 'px, ' + newPos.y + 'px)';
     previewPanel.style.opacity = 1;
 }
@@ -562,7 +630,7 @@ function render() {
                 INTERSECTED = intersects[0].object;
                 INTERSECTED.children[0].material.opacity = 1;
                 document.body.style.cursor = "pointer";
-                getPreviewPanel();
+                getPreviewPanel(INTERSECTED.material.name);
             }
         } else {
             if (INTERSECTED) {

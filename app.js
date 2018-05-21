@@ -5,9 +5,14 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
+var data = require('./routes/data');
 var app = express();
 
-var mongodb = require('mongodb');
+//MongoDB
+var mongodb = require('mongodb')
+var MongoClient = mongodb.MongoClient;
+// Connection URL. This is where your mongodb server is running.
+var url = 'mongodb://localhost:27017/chemistry-lab';
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -35,5 +40,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
 
 module.exports = app;
