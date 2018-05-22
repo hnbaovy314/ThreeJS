@@ -1,5 +1,6 @@
 var container, stats, raycaster;
-var currentCamera, currentScene, currentRenderer, currentControls, currentRaycastTarget = null;
+var camera, scene, renderer, controls, currentRaycastTarget = null;
+var currentStage;
 var mouse = new THREE.Vector2(), previewMouse = new THREE.Vector2(),
     INTERSECTED;
 
@@ -26,60 +27,58 @@ function init() {
     document.body.appendChild(container);
 
     // Init for default camera, used throughout the app
-    defaultCamera = new THREE.PerspectiveCamera(
+    camera = new THREE.PerspectiveCamera(
         70,
         window.innerWidth / window.innerHeight,
         1,
         1000
     );
-    defaultCamera.position.z = 10;
-    currentCamera = defaultCamera;
+    camera.position.y = 30
+    camera.position.z = 0;
 
-    // Init for default camera, used throughout the app
-    testCamera = new THREE.PerspectiveCamera(
-        70,
-        window.innerWidth / window.innerHeight,
-        1,
-        1000
-    );
-    testCamera.position.z = 5;
+    renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 1);
+    // renderer.shadowMapEnabled = true;
+    container.appendChild(renderer.domElement);
 
-    currentScene = new THREE.Scene();
-    currentScene.background = new THREE.Color(0xF2F2F2);
+    controls = new THREE.OrbitControls(camera);
+    controls.target.set(50, 30, 0);
 
-    currentRenderer = new THREE.WebGLRenderer();
-    currentRenderer.setPixelRatio(window.devicePixelRatio);
-    currentRenderer.setSize(window.innerWidth, window.innerHeight);
-    currentRenderer.setClearColor(0xF2F2F2, 1);
-    container.appendChild(currentRenderer.domElement);
+    // -----------------------------------------------------------------
 
-    currentControls = new THREE.OrbitControls(currentCamera);
-    currentControls.target = new THREE.Vector3(0, 0, 0);
+    currentStage = new ChemicalDesk();
+    scene = currentStage.init(camera, renderer, controls);
 
-    var mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 1, 1),
-        new THREE.MeshBasicMaterial({
-            color: 0xFF00FF
+    var floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(300, 300, 100),
+        new THREE.MeshPhongMaterial({
+            color: 0xF2F2F2,
+            side: THREE.DoubleSide
         })
-    );
+    )
 
-    currentScene.add(mesh);
-
-    mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 1, 1),
-        new THREE.MeshBasicMaterial({
-            color: 0xFF00FF
+    var wall = new THREE.Mesh(
+        new THREE.PlaneGeometry(300, 100, 100),
+        new THREE.MeshPhongMaterial({
+            color: 0xF2F2F2,
+            side: THREE.DoubleSide
         })
-    );
-    mesh.position.x = 10;
-    mesh.position.y = 0;
-    mesh.position.z = 10;
+    )
 
-    currentScene.add(mesh);
+    floor.rotation.x = Math.PI / 2;
+    floor.receiveShadow = true;
 
-    console.log(currentControls);
-    test();
+    wall.position.x = 50 + 0.75 * 25;
+    wall.position.y = 50;
+    wall.rotation.y = Math.PI / 2;
+    wall.receiveShadow = true;
 
+    scene.add(floor);
+    scene.add(wall);
+
+    // -----------------------------------------------------------------
     // Performance Stats
     stats = new Stats();
     container.appendChild(stats.dom);
@@ -90,9 +89,9 @@ function init() {
 }
 
 function onWindowResize() {
-    currentCamera.aspect = window.innerWidth / window.innerHeight;
-    currentCamera.updateProjectionMatrix();
-    currentRenderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function onDocumentMouseMove(event) {
@@ -103,13 +102,6 @@ function onDocumentMouseMove(event) {
 
     previewMouse.x = event.clientX;
     previewMouse.y = event.clientY;
-}
-
-function test() {
-    setTimeout(function() {
-        currentCamera = testCamera;
-        currentControls.object = testCamera;
-    }, 3000);
 }
 
 // Get element preview data panel
@@ -146,38 +138,33 @@ function animate() {
 }
 
 function render() {
-    // find intersections
-    if (currentRaycastTarget) {
-        raycaster.setFromCamera(mouse, currentCamera);
-        var intersects = raycaster.intersectObjects(currentRaycastTarget);
-        if (intersects.length > 0) {
-            if (INTERSECTED != intersects[0].object) {
-                if (INTERSECTED) {
-                    INTERSECTED.children[0].material.opacity = 0.25;
-                    document.body.style.cursor = "auto";
-                    hidePreviewPanel();
-                }
+    // // find intersections
+    // if (currentRaycastTarget) {
+    //     raycaster.setFromCamera(mouse, currentCamera);
+    //     var intersects = raycaster.intersectObjects(currentRaycastTarget);
+    //     if (intersects.length > 0) {
+    //         if (INTERSECTED != intersects[0].object) {
+    //             if (INTERSECTED) {
+    //                 INTERSECTED.children[0].material.opacity = 0.25;
+    //                 document.body.style.cursor = "auto";
+    //                 hidePreviewPanel();
+    //             }
 
-                INTERSECTED = intersects[0].object;
-                INTERSECTED.children[0].material.opacity = 1;
-                document.body.style.cursor = "pointer";
-                getPreviewPanel();
-            }
-        } else {
-            if (INTERSECTED) {
-                INTERSECTED.children[0].material.opacity = 0.25;
-                document.body.style.cursor = "auto";
-                hidePreviewPanel();
-            }
+    //             INTERSECTED = intersects[0].object;
+    //             INTERSECTED.children[0].material.opacity = 1;
+    //             document.body.style.cursor = "pointer";
+    //             getPreviewPanel();
+    //         }
+    //     } else {
+    //         if (INTERSECTED) {
+    //             INTERSECTED.children[0].material.opacity = 0.25;
+    //             document.body.style.cursor = "auto";
+    //             hidePreviewPanel();
+    //         }
 
-            INTERSECTED = null;
-        }
-    }
+    //         INTERSECTED = null;
+    //     }
+    // }
 
-    currentCamera.rotation.y += 0.5;
-
-    stats.update();
-    currentControls.update();
-    TWEEN.update();
-    currentRenderer.render(currentScene, currentCamera);
+    currentStage.update(camera, scene, renderer, controls, stats);
 }
