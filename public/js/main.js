@@ -236,6 +236,7 @@ function onTableBoxClick(event) {
         // Return the raycast, INTERSECTED and preview panel to clean state
         currentRaycastTarget = null;
         INTERSECTED.children[0].material.opacity = 0.25;
+        var atomicNumber = INTERSECTED.material.name;
         INTERSECTED = null;
         hidePreviewPanel();
         document.body.style.cursor = "auto";
@@ -243,7 +244,7 @@ function onTableBoxClick(event) {
         dataScreen.style.transform = 'translateY(-100vh)';
         dataScreen.style.opacity = 1;
 
-        getElementModel();
+        getElementModel(atomicNumber);
 
         // Switch to element model camera, scene & ...
         currentCamera = elementCamera;
@@ -405,6 +406,14 @@ function getElementGrid(table) {
     return group;
 }
 
+// function calcEperOrbit(z) {
+//   var eConfig = [];
+//   var tmp = z;
+//   for (i = 0; i < orbit.length; i++) {
+//
+//   }
+// }
+
 function calcElectronConf(z) {
   var eConfig = '';
   var num = z;
@@ -525,10 +534,11 @@ function getElementModelOrbitLayer(electronNumber, radius, tilt) {
 }
 
 // Get element atomic model
-function getElementModel() {
-    var atomicNumber = 8; // = Number of protons = Number of electrons
-    var atomicWeight = 15.9994;
+function getElementModel(z) {
+    var atomicNumber = z; // = Number of protons = Number of electrons
+    var atomicWeight = elements[z-1].atomicWeight;
     var neutronNumber = Math.round(atomicWeight) - atomicNumber;
+    var tmp = z;
 
     var group = new THREE.Group();
     var mergedProtonGeometry = new THREE.Geometry(), mergedNeutronGeometry = new THREE.Geometry();
@@ -586,11 +596,21 @@ function getElementModel() {
     group.add(mergedProtonMesh);
     group.add(mergedNeutronMesh);
     group.add(outerMesh);
-    group.add(
         // Get electron layer
         // Cứ cho chạy loop, tính số electron ở từng lớp rồi gọi hàm
-        getElementModelOrbitLayer(8, radius + 7, 0)
-    );
+    var eGroup = new THREE.Group();
+    for (i = 0; i <= orbit.length; i++) {
+      tmp -= orbitNum[i];
+      if (tmp <= 0){
+        var temp = tmp + orbitNum[i];
+        eGroup.add(getElementModelOrbitLayer(temp, radius + 5*(i+1), 0));
+        break;
+      }
+      else {
+        eGroup.add(getElementModelOrbitLayer(orbitNum[i], radius + 5*(i+1), 0));
+      }
+    }
+    group.add(eGroup);
 
     meshArr.push(mergedProtonMesh);
     meshArr.push(mergedNeutronMesh);
