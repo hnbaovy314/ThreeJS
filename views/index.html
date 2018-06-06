@@ -3,8 +3,31 @@
 <head>
 	<title>3D Chemical Lab</title>
 	<link rel="stylesheet" type="text/css" href="stylesheets/style.css">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
 </head>
 <body>
+	<!-- Guide Tab Panel -->
+	<div id="guide-tab">
+	</div>
+
+	<!-- Guide Text Panel -->
+	<div id="guide-text">
+		<div id="gt-close-button">
+			<b></b><b></b><b></b><b></b>
+		</div>
+		<div id="gt-body"></div>
+		<div id="gt-pagination">
+			<i id="gt-pagination-left" class="fas fa-angle-left"></i>
+			<span id="gt-pagination-page"></span>
+			<i id="gt-pagination-right" class="fas fa-angle-right"></i>
+		</div>
+	</div>
+
+	<!-- Info Panel (on mouse over equipments and some positions) -->
+	<div id="info-panel">
+	</div>
+
+	<!-- Scripts -->
 	<script src="lib/three.min.js"></script>
 	<script src="lib/dat.gui.min.js"></script>
 	<script src="lib/stats.min.js"></script>
@@ -13,7 +36,6 @@
 	<!-- Controls -->
 	<script src="lib/controls/OrbitControls.js"></script>
 	<script src="lib/controls/TrackballControls.js"></script>
-	<script src="lib/controls/PointerLockControls.js"></script>
 	<!-- Loaders -->
 	<script src="lib/loaders/LoaderSupport.js"></script>
 	<script src="lib/loaders/MTLLoader.js"></script>
@@ -23,6 +45,10 @@
 	<script src="lib/lights/RectAreaLightUniformsLib.js"></script>
 	<script src="lib/BufferGeometryUtils.js"></script>
 
+	<!-- Main JS -->
+	<script src="js/raycaster.js"></script>
+	<script src="js/lab-scene.js"></script>
+	<script src="js/lab-guide.js"></script>
 	<script src="js/main.js"></script>
 </body>
 </html>
