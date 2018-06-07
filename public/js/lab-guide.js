@@ -61,4 +61,8 @@ LabGuide = function(camera, scene) {
     var scope = this;
 
     var guideTexts, page = 1;
+
+    function unit1() {
+        
+    }
 }

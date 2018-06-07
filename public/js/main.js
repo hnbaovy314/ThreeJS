@@ -15,10 +15,26 @@ var equipmentsInfo = {
     "lab-desk": {
         name: "Lab's Experiment Desk",
         desc: "All experiments will be conducted here. Click to move to the desk."
+    },
+    "test-tube": {
+        name: "Test Tube",
+        desc: "All experiments will be conducted here. Click to move to the desk."
+    },
+    "flask": {
+        name: "Conical Flask",
+        desc: "All experiments will be conducted here. Click to move to the desk."
+    },
+    "retort": {
+        name: "Retort",
+        desc: "All experiments will be conducted here. Click to move to the desk."
+    },
+    "beaker": {
+        name: "Beaker",
+        desc: "All experiments will be conducted here. Click to move to the desk."
     }
 }
 
-var container, stats, raycaster, raycastTarget = []; // Array to hold all meshes that needs disposing
+var container, stats, raycaster; // Array to hold all meshes that needs disposing
 var camera, scene, renderer, controls;
 
 init();
@@ -61,12 +77,13 @@ function init() {
     controls.target.set(34.995, 30, -29.99);
     // ----------------------------------------------------
     
-    new LabScene(camera, scene).init(gui, raycastTarget);
+    var labScene = new LabScene(gui, camera, scene);
+    labScene.init();
     var labGuide = new LabGuide(camera, scene);
-    labGuide.init(raycastTarget);
+    labGuide.init(labScene.raycastTarget);
     labGuide.createGuideText(initGuideTexts);
 
-    raycaster = new Raycaster(gui, camera, scene, controls, raycastTarget, equipmentsInfo);
+    raycaster = new Raycaster(gui, camera, scene, controls, labScene.raycastTarget, equipmentsInfo);
     raycaster.init();
 
     window.addEventListener('resize', onWindowResize, false);

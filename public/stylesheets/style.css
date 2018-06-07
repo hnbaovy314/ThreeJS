@@ -137,6 +137,10 @@ h1, h2 {
     transition: all 0.1s ease-out;
 }
 
+#guide-tab #gt-back-to-scene {
+    font-size: 25px;
+}
+
 /* Guide Text */
 #guide-text {
     position: absolute;

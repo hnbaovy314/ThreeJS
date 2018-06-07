@@ -17,6 +17,9 @@ Raycaster = function(gui, camera, scene, controls, raycastTarget, equipmentsInfo
     this.init = function() {
         document.addEventListener('mousemove', onDocumentMouseMove, false);
         document.addEventListener('mousedown', onDocumentMouseDown, false);
+
+        // --- (Didn't know where to put this)
+        document.getElementById("gt-back-to-scene").addEventListener("click", turnOffGuideTab, false);
     }
 
     this.update = function() {
@@ -76,7 +79,7 @@ Raycaster = function(gui, camera, scene, controls, raycastTarget, equipmentsInfo
 
     var infoPanel = document.getElementById("info-panel");
 
-    var currentPos = '';
+    var currentPos = '', prevPos = '';
 
     var guideLock = false;
 
@@ -96,6 +99,7 @@ Raycaster = function(gui, camera, scene, controls, raycastTarget, equipmentsInfo
         if (INTERSECTED && INTERSECTED.name != currentPos) {
             switch(INTERSECTED.name) {
                 case "guide-tab": {
+                    prevPos = currentPos;
                     currentPos = "guide-tab";
                     hideInfoPanel();
                     bringUpGuideTab();
@@ -200,6 +204,33 @@ Raycaster = function(gui, camera, scene, controls, raycastTarget, equipmentsInfo
         INTERSECTED.parent.children[0].visible = false;
 
         guideLock = true;
-        scope.controls.enabled = false;
+    }
+
+    // Turn off the guide tab
+    function turnOffGuideTab(event) {
+        event.preventDefault();
+
+        document.getElementById("guide-tab").style.visibility = "hidden";
+        document.getElementById("guide-tab").style.opacity = 0;
+
+        new TWEEN.Tween(INTERSECTED.rotation)
+        .to({x: -0.5, y: 0, z: 0.05}, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        new TWEEN.Tween(INTERSECTED.position)
+        .to({x: -4.5, y: -2.2, z: -3}, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        INTERSECTED.traverse(function(child) {
+            if (child instanceof THREE.Mesh) {
+                child.material.opacity -= 0.3;
+            }
+        });
+        INTERSECTED.parent.children[0].visible = true;
+
+        guideLock = false;
+        currentPos = prevPos;
     }
 }
