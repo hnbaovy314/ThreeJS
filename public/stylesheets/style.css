@@ -130,15 +130,83 @@ h1, h2 {
     margin-left: auto;
     margin-right: auto;
     z-index: 1;
-    background: #EDEDED;
+    background: #F2F2F2;
 
     visibility: hidden;
     opacity: 0;
     transition: all 0.1s ease-out;
 }
 
-#guide-tab #gt-back-to-scene {
-    font-size: 25px;
+#guide-tab #gtab-back-to-scene {
+    padding: 3px 12px;
+    font-size: 30px;
+    border-right: 1px solid white;
+}
+
+#guide-tab .gtab-app-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background: #00BFFF;
+    color: white;
+    padding: 5px 0;
+}
+
+#guide-tab .gtab-app-header h2 {
+    font-size: 20px;
+    padding: 0 10px;
+}
+
+#guide-tab #gtab-back-to-scene:hover {
+    color: rgba(255,255,255, 0.5);
+    cursor: pointer;
+}
+
+#guide-tab #gtab-content {
+    
+}
+
+#guide-tab #gtab-content #gtab-back-to-menu {
+    pointer-events: none;
+    font-size: 20px;
+    padding: 3px 10px;
+    opacity: 0.5;
+}
+
+#guide-tab #gtab-content #gtab-back-to-menu:hover {
+    background: rgba(255,255,255, 0.5);
+    cursor: pointer;
+}
+
+#guide-tab .gtab-unit-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background: #1ab1e4;
+    color: white;
+    padding: 10px 0;
+}
+
+#guide-tab .gtab-unit-header h4 {
+    margin: 0;
+}
+
+#guide-tab #gtab-pagination {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 40px;
+
+    visibility: hidden;
+}
+
+#guide-tab #gtab-pagination i {
+   padding: 10px;
+}
+
+#guide-tab #gtab-pagination i:hover {
+    background: rgba(255,255,255, 0.5);
+    cursor: pointer;
 }
 
 /* Guide Text */
@@ -217,6 +285,9 @@ h1, h2 {
     font-size: 20px;
     margin: 0;
     height: 70%;
+    text-align: center;
+    padding: 10px 10px 0;
+    line-height: 1.5;
 }
 
 #guide-text #gt-pagination {

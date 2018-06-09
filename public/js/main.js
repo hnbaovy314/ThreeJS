@@ -1,41 +1,6 @@
-var initGuideTexts = [
-    "Use mouse to look around by clicking & dragging",
-    "You can view some equipment's info by hovering over them"
-]
-
-var equipmentsInfo = {
-    "guide-tab": {
-        name: "Guide Tab",
-        desc: "A glorious Ipad that will assists you with your learning. Click to bring it up."
-    },
-    "window": {
-        name: "Lab's Window",
-        desc: "Click if you want to take a closer look at the city."
-    },
-    "lab-desk": {
-        name: "Lab's Experiment Desk",
-        desc: "All experiments will be conducted here. Click to move to the desk."
-    },
-    "test-tube": {
-        name: "Test Tube",
-        desc: "All experiments will be conducted here. Click to move to the desk."
-    },
-    "flask": {
-        name: "Conical Flask",
-        desc: "All experiments will be conducted here. Click to move to the desk."
-    },
-    "retort": {
-        name: "Retort",
-        desc: "All experiments will be conducted here. Click to move to the desk."
-    },
-    "beaker": {
-        name: "Beaker",
-        desc: "All experiments will be conducted here. Click to move to the desk."
-    }
-}
-
-var container, stats, raycaster; // Array to hold all meshes that needs disposing
+var container, stats;
 var camera, scene, renderer, controls;
+var labScene, labGuide;
 
 init();
 animate();
@@ -77,14 +42,10 @@ function init() {
     controls.target.set(34.995, 30, -29.99);
     // ----------------------------------------------------
     
-    var labScene = new LabScene(gui, camera, scene);
+    labScene = new LabScene(gui, camera, scene);
     labScene.init();
-    var labGuide = new LabGuide(camera, scene);
-    labGuide.init(labScene.raycastTarget);
-    labGuide.createGuideText(initGuideTexts);
-
-    raycaster = new Raycaster(gui, camera, scene, controls, labScene.raycastTarget, equipmentsInfo);
-    raycaster.init();
+    labGuide = new LabGuide(gui, camera, scene, controls, labScene);
+    labGuide.init();
 
     window.addEventListener('resize', onWindowResize, false);
 }
@@ -101,7 +62,7 @@ function animate() {
 }
 
 function render() {
-    raycaster.update();
+    labGuide.update();
     controls.update();
     TWEEN.update();
     renderer.render(scene, camera);

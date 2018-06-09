@@ -19,7 +19,7 @@ Raycaster = function(gui, camera, scene, controls, raycastTarget, equipmentsInfo
         document.addEventListener('mousedown', onDocumentMouseDown, false);
 
         // --- (Didn't know where to put this)
-        document.getElementById("gt-back-to-scene").addEventListener("click", turnOffGuideTab, false);
+        document.getElementById("gtab-back-to-scene").addEventListener("click", scope.turnOffGuideTab, false);
     }
 
     this.update = function() {
@@ -72,6 +72,81 @@ Raycaster = function(gui, camera, scene, controls, raycastTarget, equipmentsInfo
         }
     }
 
+     // Move to experiment desk position
+     this.moveToDesk = function() {
+        new TWEEN.Tween(scope.controls.target)
+        .to({x: -25.01, y: 30, z: -26}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        new TWEEN.Tween(scope.camera.position)
+        .to({x: -25, y: 30, z: -26}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+    }
+
+    // Bring up the guide tab
+    this.bringUpGuideTab = function() {
+        new TWEEN.Tween(INTERSECTED.rotation)
+        .to({x: 0, y: 0, z: 0}, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        new TWEEN.Tween(INTERSECTED.position)
+        .to({x: -3.29, y: 0.5, z: -1.75}, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onComplete(function() {
+            document.getElementById("guide-tab").style.visibility = "visible";
+            document.getElementById("guide-tab").style.opacity = 1;
+        })
+        .start();
+
+        INTERSECTED.traverse(function(child) {
+            if (child instanceof THREE.Mesh) {
+                child.material.opacity += 0.3;
+            }
+        });
+        INTERSECTED.parent.children[0].visible = false;
+
+        guideLock = true;
+    }
+
+    // Turn off the guide tab
+    this.turnOffGuideTab = function(event) {
+        event.preventDefault();
+
+        document.getElementById("guide-tab").style.visibility = "hidden";
+        document.getElementById("guide-tab").style.opacity = 0;
+
+        new TWEEN.Tween(INTERSECTED.rotation)
+        .to({x: -0.5, y: 0, z: 0.05}, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        new TWEEN.Tween(INTERSECTED.position)
+        .to({x: -4.5, y: -2.2, z: -3}, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        INTERSECTED.traverse(function(child) {
+            if (child instanceof THREE.Mesh) {
+                child.material.opacity -= 0.3;
+            }
+        });
+        INTERSECTED.parent.children[0].visible = true;
+
+        guideLock = false;
+        currentPos = prevPos;
+    }
+
+    this.setPos = function(pos) {
+        currentPos = pos;
+    }
+
+    this.setPrevPos = function(pos) {
+        prevPos = pos;
+    }
+
     // Internals
     var scope = this;
 
@@ -102,7 +177,7 @@ Raycaster = function(gui, camera, scene, controls, raycastTarget, equipmentsInfo
                     prevPos = currentPos;
                     currentPos = "guide-tab";
                     hideInfoPanel();
-                    bringUpGuideTab();
+                    scope.bringUpGuideTab();
                     break;
                 }
                 case "window": {
@@ -114,7 +189,7 @@ Raycaster = function(gui, camera, scene, controls, raycastTarget, equipmentsInfo
                 case "lab-desk": {
                     currentPos = "lab-desk";
                     hideInfoPanel();
-                    moveToDesk();
+                    scope.moveToDesk();
                     break;
                 }
                 default: break;
@@ -165,72 +240,5 @@ Raycaster = function(gui, camera, scene, controls, raycastTarget, equipmentsInfo
         .to({x: 0, y: 30, z: 42.5}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
-    }
-
-    // Move to experiment desk position
-    function moveToDesk() {
-        new TWEEN.Tween(scope.controls.target)
-        .to({x: -25.01, y: 30, z: -26}, 500)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-
-        new TWEEN.Tween(scope.camera.position)
-        .to({x: -25, y: 30, z: -26}, 500)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-    }
-
-    // Bring up the guide tab
-    function bringUpGuideTab() {
-        new TWEEN.Tween(INTERSECTED.rotation)
-        .to({x: 0, y: 0, z: 0}, 300)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-
-        new TWEEN.Tween(INTERSECTED.position)
-        .to({x: -3.29, y: 0.5, z: -1.75}, 300)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .onComplete(function() {
-            document.getElementById("guide-tab").style.visibility = "visible";
-            document.getElementById("guide-tab").style.opacity = 1;
-        })
-        .start();
-
-        INTERSECTED.traverse(function(child) {
-            if (child instanceof THREE.Mesh) {
-                child.material.opacity += 0.3;
-            }
-        });
-        INTERSECTED.parent.children[0].visible = false;
-
-        guideLock = true;
-    }
-
-    // Turn off the guide tab
-    function turnOffGuideTab(event) {
-        event.preventDefault();
-
-        document.getElementById("guide-tab").style.visibility = "hidden";
-        document.getElementById("guide-tab").style.opacity = 0;
-
-        new TWEEN.Tween(INTERSECTED.rotation)
-        .to({x: -0.5, y: 0, z: 0.05}, 300)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-
-        new TWEEN.Tween(INTERSECTED.position)
-        .to({x: -4.5, y: -2.2, z: -3}, 300)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-
-        INTERSECTED.traverse(function(child) {
-            if (child instanceof THREE.Mesh) {
-                child.material.opacity -= 0.3;
-            }
-        });
-        INTERSECTED.parent.children[0].visible = true;
-
-        guideLock = false;
-        currentPos = prevPos;
     }
 }

@@ -8,9 +8,25 @@
 <body>
 	<!-- Guide Tab Panel -->
 	<div id="guide-tab">
-		<a id="gt-back-to-scene" href="javascript:void(0)"><i class="fas fa-angle-left"></i></a>
-		<h2>Virtual Chemistry Lab</h2>
-		<a id="unit-1" href="javascript:void(0)">Unit 1</a>
+		<div class="gtab-app-header">
+			<i id="gtab-back-to-scene" class="fas fa-angle-left"></i>
+			<h2>Virtual Chemistry Lab</h2>
+		</div>
+		<div id="gtab-content">
+			<div class="gtab-unit-header">
+				<i id="gtab-back-to-menu" class="fas fa-arrow-alt-circle-left"></i>
+				<span id="gtab-content-header"><h4>Lessons</h4></span>
+			</div>
+
+			<div id="gtab-content-body">
+
+			</div>
+		</div>
+		<div id='gtab-pagination'>
+			<i id="gtab-pagination-left" class="fas fa-angle-left"></i>
+			<span id="gtab-pagination-page"></span>
+			<i id="gtab-pagination-right" class="fas fa-angle-right"></i>
+		</div>
 	</div>
 
 	<!-- Guide Text Panel -->
@@ -52,6 +68,7 @@
 	<script src="js/raycaster.js"></script>
 	<script src="js/lab-scene.js"></script>
 	<script src="js/lab-guide.js"></script>
+	<script src="js/unit-loop.js"></script>
 	<script src="js/main.js"></script>
 </body>
 </html>

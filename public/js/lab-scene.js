@@ -392,7 +392,14 @@ LabScene = function(gui, camera, scene) {
     }
 
     this.getLabware = function(name) {
-        return labware[name].clone();
+        var labware = labware[name].clone();
+        labware.traverse(function(child) {
+            if (child instanceof THREE.Mesh) {
+                child.material = child.material.clone();
+            }
+        });
+
+        return labware;
     }
 
     // Internals
