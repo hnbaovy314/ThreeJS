@@ -1,6 +1,6 @@
 var demoUnit = {
-    0: {
-        type: 'text',
+    0: { // Step of the unit
+        type: 'theory',
         content: {
             0: [
                 {
@@ -15,17 +15,96 @@ var demoUnit = {
             1: [
                 {
                     type: 'pure-text',
-                    content: "Bla bla bla"
+                    content: "Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!"
                 }
             ]
         }
     },
     1: {
-        type: 'experiment'
-    }
+        type: 'experiment',
+        content: {
+            chemical: [
+                {
+                    id: 1,
+                    name: "Mercury",
+                    formula: "Hg",
+                    type: "metal",
+                    texture: "mercury.jpg",
+                    form: "liquid",
+                    container: "spilled-chemical",
+                    fillScale: -1
+                },
+                {
+                    id: 2,
+                    name: "Sulphur",
+                    formula: "S",
+                    type: "metal",
+                    texture: "sulphur.jpg",
+                    form: "solid",
+                    container: "beaker",
+                    fillScale: 1/3
+                }
+            ],
+            steps: [
+                {
+                    action: "pick-up",
+                    target: 2,
+                    guideText: [
+                        "123",
+                        "Mashiro best girl!"
+                    ]
+                },
+                {
+                    action: "pour",
+                    target: 1,
+                    guideText: [
+                        "456",
+                        "Mashiro best girl!"
+                    ]
+                },
+                {
+                    action: "reaction",
+                    target: 1,
+                    reaction: {
+                        type: "change-texture",
+                        texture: "sulphur.jpg"
+                    },
+                    guideText: [
+                        "789",
+                        "Mashiro best girl!"
+                    ]
+                },
+                {
+                    action: "clean",
+                    target: 1,
+                    guideText: [
+                        "Abc",
+                        "XYZ"
+                    ]
+                }
+            ],
+        },
+    },
+    2: {
+        type: 'theory',
+        content: {
+            0: [
+                {
+                    type: 'pure-text',
+                    content: 'AAAAAAAAA'
+                }
+            ],
+            1: [
+                {
+                    type: 'pure-text',
+                    content: "HAHAHAHAHAHA"
+                }
+            ]
+        }
+    },
 }
 
-UnitLoop = function(camera, controls, raycaster, labScene) {
+UnitLoop = function(camera, controls, labScene, labGuide) {
     
     this.camera = camera;
 
@@ -33,7 +112,19 @@ UnitLoop = function(camera, controls, raycaster, labScene) {
 
     this.labScene = labScene;
 
-    this.raycaster = raycaster;
+    this.labGuide = labGuide;
+
+    this.readyForNextStep = false;
+
+    this.unit1 = function(event) {
+        event.preventDefault();
+
+        scope.labGuide.moveToDesk();
+        scope.labGuide.raycaster.prevPos = "lab-desk";
+
+        currentUnit = demoUnit;
+        startUnit('Unit 1');
+    }
 
     this.init = function() {
         document.getElementById("gtab-pagination-left").addEventListener("click", function(event) {
@@ -56,26 +147,53 @@ UnitLoop = function(camera, controls, raycaster, labScene) {
                 stepTextPage = stepTextContent.length - 1;
             }
 
+            if (stepTextPage == stepTextContent.length - 1) {
+                scope.readyForNextStep = true;
+            }
+
             // document.getElementById("gtab-pagination-page").innerHTML = page + ' / ' + guideTexts.length;
             gtabContentBody.innerHTML = stepTextContent[stepTextPage];
         });
     }
 
-    this.unit1 = function(event) {
-        event.preventDefault();
+    this.reset = function() {
+        running = false;
+        currentUnit = null;
+    }
 
-        scope.raycaster.moveToDesk();
-        scope.raycaster.setPrevPos("lab-desk");
+    this.checkNextStep = function() {
+        if (running && step < totalStep - 1 && scope.readyForNextStep) {
+            switch (currentUnit[step].type) {
+                case "theory": {
+                    step += 1;
+                    stepTextPage = 0;
+                    stepTextContent = [];
+                    needUpdate = true;
+                    scope.readyForNextStep = false;
+                    scope.labGuide.hideGuideText();
 
-        currentUnit = demoUnit;
-        startUnit('Unit 1');
+                    break;
+                }
+                case "experiment": {
+                    step += 1;
+                    needUpdate = true;
+                    scope.readyForNextStep = false;
+                    scope.labScene.reset();
+                    scope.labGuide.reset();
+
+                    break;
+                }
+                default: break;
+            }
+        }
     }
 
     this.update = function() {
-        if (needUpdate) {
-            switch(currentUnit[step].type) {
-                case 'text': {
-                    var content = currentUnit[step].content;
+        if (running & needUpdate) {
+            currentStep = currentUnit[step];
+            switch(currentStep.type) {
+                case 'theory': {
+                    var content = currentStep.content;
                     for (const page in content) {
                         var pageContent = '';
                         for (var i = 0; i < content[page].length; i++) {
@@ -94,7 +212,6 @@ UnitLoop = function(camera, controls, raycaster, labScene) {
                             }
                         }
 
-                        console.log(page);
                         stepTextContent.push(pageContent);
                     }
 
@@ -105,6 +222,13 @@ UnitLoop = function(camera, controls, raycaster, labScene) {
                     }
 
                     gtabContentBody.innerHTML = stepTextContent[stepTextPage];
+                    needUpdate = false;
+                    break;
+                }
+                case 'experiment': {
+                    scope.labScene.addLabware(currentStep.content.chemical);
+                    scope.labGuide.raycaster.enableInteractingWithLabware(currentStep.content);
+
                     needUpdate = false;
                     break;
                 }
@@ -119,10 +243,14 @@ UnitLoop = function(camera, controls, raycaster, labScene) {
     var gtabContentHeader = document.getElementById('gtab-content-header');
     var gtabContentBody = document.getElementById('gtab-content-body');
 
-    var currentUnit, step, stepTextContent = [], stepTextPage = 0, needUpdate = false;
+    var currentUnit, step, totalStep, stepTextContent = [], stepTextPage = 0, needUpdate = false;
+
+    var running = false;
 
     function startUnit(unit) {
+        running = true;
         step = 0;
+        totalStep = Object.keys(currentUnit).length;
         stepTextContent = [];
         stepTextPage = 0;
         needUpdate = true;

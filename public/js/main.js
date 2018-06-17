@@ -44,7 +44,7 @@ function init() {
     
     labScene = new LabScene(gui, camera, scene);
     labScene.init();
-    labGuide = new LabGuide(gui, camera, scene, controls, labScene);
+    labGuide = new LabGuide(gui, controls, labScene);
     labGuide.init();
 
     window.addEventListener('resize', onWindowResize, false);

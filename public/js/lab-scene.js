@@ -8,6 +8,61 @@ LabScene = function(gui, camera, scene) {
 
     this.raycastTarget = [];
 
+    this.previewInfo = {};
+
+    this.labwares = new Labwares(this, gui);
+
+    this.add = function(mesh) {
+        scope.scene.add(mesh);
+    }
+
+    this.remove = function(mesh) {
+        scope.scene.remove(mesh);
+    }
+
+    this.getObjectByName = function(name) {
+        return scope.scene.getObjectByName(name);
+    }
+
+    this.addLabware = function(chemical) {
+        var separation = 5;
+        var totalWidth = separation * (chemical.length - 1);
+        var containers = [];
+        for (var i = 0; i < chemical.length; i++) {     
+            var container = scope.labwares.getLabware(chemical[i]);
+            scope.scene.add(container);
+            containers.push(container);
+
+            var height = container.boundingBox.max.y - container.boundingBox.min.y;
+            container.position.set(
+                workAreaCoord.x,
+                workAreaCoord.y + height * container.scaleMultiplier / 2,
+                workAreaCoord.z
+            );
+
+            container.position.z += totalWidth / 2 - (separation * i);
+
+            // Add preview info
+            if (container.enableInfo) {
+                container.name = "container-" + i;
+                container.contentId = chemical[i].id;
+                scope.previewInfo[container.name] = {
+                    name: chemical[i].name + " (" + chemical[i].formula + ")",
+                    desc: "A " + chemical[i].container + " that contains " + chemical[i].form + " " + chemical[i].name
+                };
+
+                scope.raycastTarget.push(container);
+            }
+        }
+    }
+
+    this.reset = function() {
+        for (var i = scope.labwares.interactingTargets.length - 1; i >= 0; i--) {
+            delete scope.previewInfo[scope.labwares.interactingTargets[i].name];
+            scope.raycastTarget.pop();
+        };
+    }
+
     this.init = function() {
         // Build the room
         var roomGeometry = new THREE.Geometry();
@@ -85,6 +140,11 @@ LabScene = function(gui, camera, scene) {
                     object.scale.set(1.45, 2.8, 2.5)
                     object.position.z = 50;
                     object.name = "window";
+
+                    scope.previewInfo["window"] = {
+                        name: "Lab's Window",
+                        desc: "Click if you want to take a closer look at the city."
+                    };
 
                     scope.raycastTarget.push(object);
                     scope.scene.add(object);
@@ -189,6 +249,10 @@ LabScene = function(gui, camera, scene) {
                     object.remove(object.children[65]);
                     object.remove(object.children[64]);
                     object.name = "lab-desk";
+                    scope.previewInfo["lab-desk"] = {
+                        name: "Lab's Experiment Desk",
+                        desc: "All experiments will be conducted here. Click to move to the desk."
+                    };
 
                     var boundingBox = new THREE.Box3().setFromObject(object);
                     var helper = new THREE.Box3Helper(boundingBox, 0x1A1A1A);
@@ -200,6 +264,22 @@ LabScene = function(gui, camera, scene) {
                     scope.raycastTarget.push(object);
                     scope.scene.add(part2);
                     scope.scene.add(object);
+
+                    // Create a working area
+                    var plane = new THREE.PlaneBufferGeometry(8.5, 20, 32, 32);
+                    var geometry = new THREE.EdgesGeometry(plane);
+                    var material = new THREE.LineBasicMaterial({color: 0xffffff, linewidth: 2});
+                    var workArea = new THREE.LineSegments(geometry, material);
+                    scope.scene.add(workArea);
+                    workArea.position.set(workAreaCoord.x, workAreaCoord.y, workAreaCoord.z);
+                    workArea.rotation.x = Math.PI / 2;
+
+                    var cube = new THREE.Mesh(
+                        new THREE.BoxBufferGeometry(0.2, 0.2, 0.2),
+                        new THREE.MeshBasicMaterial()
+                    )
+                    cube.position.set(workAreaCoord.x, workAreaCoord.y, workAreaCoord.z);
+                    scope.scene.add(cube);
                 });
         });
 
@@ -306,19 +386,6 @@ LabScene = function(gui, camera, scene) {
             });
         });
 
-        // Load the hand
-        new THREE.OBJLoader()
-        .load("/models/hand.obj", function(object) {
-            object.scale.set(5, 5, 5);
-            object.position.set(1, -1, -0.75);
-            object.rotation.set(-1, -0.45, 0.1);
-
-            object.children[0].material.color.setHex(0xFFCD94);
-
-            scope.camera.add(object);
-            scope.scene.add(camera);
-        });
-
         // Load the city
         new THREE.MTLLoader()
         .setPath('/models/city/center/')
@@ -388,176 +455,16 @@ LabScene = function(gui, camera, scene) {
 
         scope.scene.fog = new THREE.Fog(0xFFFFFF, 0.1, 5000);
 
-        loadLabwareModels();
-    }
-
-    this.getLabware = function(name) {
-        var labware = labware[name].clone();
-        labware.traverse(function(child) {
-            if (child instanceof THREE.Mesh) {
-                child.material = child.material.clone();
-            }
-        });
-
-        return labware;
+        // Load labware models
+        scope.labwares.init();
     }
 
     // Internals
     var scope = this;
 
-    var labware = {};
-
-    // Load labware models onto the experiment desk
-    function loadLabwareModels() {
-        // Load the test tube rack
-        new THREE.MTLLoader()
-        .setPath('/models/labware/')
-        .load('test-tube-rack.mtl', function(materials) {
-            materials.preload();
-            new THREE.OBJLoader()
-                .setMaterials(materials)
-                .setPath('models/labware/')
-                .load('test-tube-rack.obj', function(object) {
-                    object.scale.set(0.125, 0.125, 0.125);
-                    object.position.set(-44, 22, -30);
-                    object.rotation.y = Math.PI / 2;
-
-                    object.traverse(function(child) {
-                        if (child instanceof THREE.Mesh) {
-                            child.castShadow = true;
-                        }
-                    })
-
-                    scope.scene.add(object);
-                });
-        });
-
-        // Load the test tube
-        new THREE.OBJLoader()
-        .load("/models/labware/test-tube.obj", function(object) {
-            object.traverse(function(child) {
-                if (child instanceof THREE.Mesh) {
-                    child.material.transparent = true;
-                    child.material.opacity = 0.7;
-                }
-            });
-
-            var boundingBox = new THREE.Box3().setFromObject(object);
-            
-            var anotherTube = object.clone();
-            anotherTube.add(fillLabware(boundingBox, 'test-tube', {color: 0xFF0000}));
-            
-            object.name = "test-tube";
-            object.scale.set(3, 3, 3);
-            anotherTube.scale.set(3, 3, 3);
-
-            object.position.set(-43.0, 20.05, -26.25);
-            anotherTube.position.set(-43.0, 20.05, -28.125);
-
-            labware['test-tube'] = object;
-            scope.raycastTarget.push(object);
-            scope.scene.add(object);
-            scope.scene.add(anotherTube);
-        });
-
-        // Load the flask
-        new THREE.OBJLoader()
-        .load("/models/labware/flask.obj", function(object) {
-            var anotherFlask = object.clone();
-            anotherFlask.position.set(-43, 20, -25);
-            
-            object.traverse(function(child) {
-                if (child instanceof THREE.Mesh) {
-                    child.material.transparent = true;
-                    child.material.opacity = 0.7;
-                }
-            });
-           
-            object.name = "flask";
-            object.scale.set(1.5, 1.5, 1.5);
-            object.position.set(-41, 19.5, -24);
-
-            labware['flask'] = object;
-            scope.raycastTarget.push(object);
-            scope.scene.add(object);
-            scope.scene.add(anotherFlask);
-        });
-
-        // Load the retort and retort stand
-        new THREE.OBJLoader()
-        .load("/models/labware/retort-stand.obj", function(object) {
-            var group = new THREE.Group;
-            group.add(object);
-
-            new THREE.OBJLoader()
-            .load("/models/labware/retort.obj", function(object) {
-                object.traverse(function(child) {
-                    if (child instanceof THREE.Mesh) {
-                        child.material.transparent = true;
-                        child.material.opacity = 0.7;
-                    }
-                });
-                
-                object.name = "retort";
-                group.add(object);
-                group.name = "retort";
-                group.scale.set(0.75, 0.75, 0.75);
-                group.rotation.y = Math.PI * 3 / 4;
-                group.position.set(-45, 20, -38);
-
-                labware['retort'] = group;
-                scope.raycastTarget.push(object);
-                scope.scene.add(group);
-            });
-        });
-
-        // Load the beaker
-        new THREE.OBJLoader()
-        .load("/models/labware/beaker.obj", function(object) {    
-            object.traverse(function(child) {
-                if (child instanceof THREE.Mesh) {
-                    child.material.transparent = true;
-                    child.material.opacity = 0.7;
-                }
-            });
-           
-            object.name = "beaker";
-            object.scale.set(0.8, 0.8, 0.8);
-            object.position.set(-40, 20, -20);
-
-            labware['beaker'] = object;
-            scope.raycastTarget.push(object);
-            scope.scene.add(object);
-        });
-    }
-
-    function fillLabware(boundingBox, type, chemical) {
-        switch(type) {
-            case 'test-tube': {
-                var width = boundingBox.max.x - boundingBox.min.x;
-                var height = boundingBox.max.y - boundingBox.min.y;
-                var depth = boundingBox.max.z - boundingBox.min.z;
-                var offsetX = (boundingBox.max.x + boundingBox.min.x) / 2;
-                var offsetY = (boundingBox.max.y + boundingBox.min.y) / 2;
-                var offsetZ = (boundingBox.max.z + boundingBox.min.z) / 2;
-
-                var mergeGeometry = new THREE.Geometry();
-                var geometry = new THREE.CylinderGeometry(width / 2, width / 2, height * 2 / 3, 32, 32);
-                mergeGeometry.merge(geometry);
-                geometry = new THREE.SphereGeometry(width / 2, 32, 32);
-                geometry.translate(0, -height / 3, 0);
-                mergeGeometry.merge(geometry);
-
-                var fill = new THREE.Mesh(
-                    mergeGeometry,
-                    new THREE.MeshPhongMaterial({
-                        color: chemical.color
-                    })
-                )
-                fill.position.set(offsetX, offsetY - height / 6 + width / 4, offsetZ);
-
-                return fill;
-            }
-        }
+    var workAreaCoord = {
+        x: -34,
+        y: 19.75,
+        z: -27.5
     }
 }

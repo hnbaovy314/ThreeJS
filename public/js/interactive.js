@@ -1,0 +1,438 @@
+Raycaster = function(gui, controls, labScene, labGuide) {
+
+    this.raycaster = new THREE.Raycaster();
+
+    this.labScene = labScene;
+
+    this.labGuide = labGuide;
+
+    this.gui = gui;
+
+    this.INTERSECTED = null;
+
+    this.currentPos = ''
+    this.prevPos = '';
+    
+    this.init = function() {
+        document.addEventListener('mousemove', onDocumentMouseMove, false);
+        document.addEventListener('mousedown', onDocumentMouseDown, false);
+    }
+
+    this.update = function() {
+        if (!guideLock) {
+            scope.raycaster.setFromCamera(mouse, scope.labScene.camera);
+            var intersects = scope.raycaster.intersectObjects(scope.labScene.raycastTarget, true);
+            if (intersects.length > 0) {
+                if (scope.INTERSECTED != intersects[0].object.parent) {
+                    if (scope.INTERSECTED) {
+                        scope.INTERSECTED.traverse(function(child) {
+                            if (labScene.scene.getObjectByName(scope.INTERSECTED.name + "-helper")) {
+                                labScene.scene.getObjectByName(scope.INTERSECTED.name + "-helper").material.opacity = 0;
+                            }
+
+                            hideInfoPanel();
+                        })
+                    }
+
+                    scope.INTERSECTED = intersects[0].object.parent;
+
+                    if (scope.INTERSECTED.name == "bypass") {
+                        scope.INTERSECTED = scope.INTERSECTED.parent;
+                    }
+
+                    scope.INTERSECTED.traverse(function(child) {
+                        if (labScene.scene.getObjectByName(scope.INTERSECTED.name + "-helper")) {
+                            if (scope.INTERSECTED.name != scope.currentPos) {
+                                labScene.scene.getObjectByName(scope.INTERSECTED.name + "-helper").material.opacity = 1;
+                                getInfoPanel();
+                            }
+                        } else if (child instanceof THREE.Mesh) {
+                            if (scope.INTERSECTED.name != scope.currentPos) {
+                                getInfoPanel();
+                            }
+                        }
+                    })
+                }
+            } else {
+                if (scope.INTERSECTED) {
+                    scope.INTERSECTED.traverse(function(child) {
+                        if (labScene.scene.getObjectByName(scope.INTERSECTED.name + "-helper")) {
+                            labScene.scene.getObjectByName(scope.INTERSECTED.name + "-helper").material.opacity = 0;
+                        } 
+
+                        hideInfoPanel();
+                    })
+                }
+
+                scope.INTERSECTED = null;
+            }
+        }
+
+        if (interactive && interactiveStep > interactive.steps.length - 1) {
+            scope.labGuide.unitLoop.readyForNextStep = true;
+            enableInteractingWithLabware = false;
+        }
+    }
+
+    this.enableInteractingWithLabware = function(content) {
+        enableInteractingWithLabware = true;
+        interactive = {
+            chemical: content.chemical,
+            steps: content.steps
+        }
+
+        scope.labGuide.createGuideText(interactive.steps[0].guideText);
+    }
+
+    this.resetInteractiveSettings = function() {
+        interactive = null;
+        interactiveStep = 0;
+        enableInteractingWithLabware = false;
+        scope.labScene.labwares.reset();
+    }
+
+    // Internals
+    var scope = this;
+
+    var mouse = new THREE.Vector2(), infoMouse = new THREE.Vector2();
+
+    var infoPanel = document.getElementById("info-panel");
+
+    var guideLock = false, mouseClickLock = false;
+    var enableInteractingWithLabware = false, interactive = null, interactiveStep = 0, delay = 0;
+
+    function onDocumentMouseMove(event) {
+        event.preventDefault();
+    
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+        infoMouse.x = event.clientX;
+        infoMouse.y = event.clientY;
+    }
+
+    function onDocumentMouseDown(event) {
+        event.preventDefault();
+        
+        if (scope.INTERSECTED && scope.INTERSECTED.name != scope.currentPos) {
+            switch(scope.INTERSECTED.name) {
+                case "guide-tab": {
+                    scope.prevPos = scope.currentPos;
+                    scope.currentPos = "guide-tab";
+                    hideInfoPanel();
+                    scope.labGuide.bringUpGuideTab();
+                    break;
+                }
+                case "window": {
+                    scope.currentPos = "window";
+                    hideInfoPanel();
+                    scope.labGuide.moveToWindow();
+                    break;
+                }
+                case "lab-desk": {
+                    scope.currentPos = "lab-desk";
+                    hideInfoPanel();
+                    scope.labGuide.moveToDesk();
+                    break;
+                }
+                default: break;
+            }
+        }
+
+        if (enableInteractingWithLabware && !mouseClickLock) {
+            var chemical = interactive.chemical[interactive.steps[interactiveStep].target - 1]; 
+            if (scope.INTERSECTED && scope.INTERSECTED.contentId == chemical.id) {
+                switch (interactive.steps[interactiveStep].action) {
+                    case 'pick-up': {
+                        mouseClickLock = true;                      
+                        var object = scope.INTERSECTED;
+                        var hand = scope.labScene.camera.children[1];
+
+                        var oldPos = {
+                            x: hand.position.x,
+                            y: hand.position.y,
+                            z: hand.position.z
+                        };
+                        var oldRotation = {
+                            x: hand.rotation.x,
+                            y: hand.rotation.y,
+                            z: hand.rotation.z
+                        }
+
+                        THREE.SceneUtils.detach(hand, scope.labScene.camera, scope.labScene.scene);
+                        hand.rotation.x = -2.1;
+                        hand.rotation.y = -0.35;
+
+                        var pickUpPos = {
+                            x: scope.INTERSECTED.position.x,
+                            y: scope.INTERSECTED.position.y,
+                            z: scope.INTERSECTED.position.z
+                        }
+                        new TWEEN.Tween(hand.position)
+                        .to({x: pickUpPos.x, y: pickUpPos.y, z: pickUpPos.z}, 400)
+                        .easing(TWEEN.Easing.Quadratic.InOut)
+                        .onComplete(function() {
+                            THREE.SceneUtils.attach(object, scope.labScene.scene, hand);
+                            THREE.SceneUtils.attach(hand, scope.labScene.scene, scope.labScene.camera);
+
+                            switch (chemical.container) {
+                                case "test-tube": {
+                                    object.position.x -= 0.05;
+                                    object.position.y += 0.05;
+                                    
+                                    break;
+                                }
+                                case "beaker": {
+                                    object.position.x -= 0.05;
+                                    object.position.y += 0.05;
+                                    
+                                    break;
+                                }
+                                default: break;
+                            }
+
+                            new TWEEN.Tween(hand.position)
+                            .to({x: oldPos.x, y: oldPos.y, z: oldPos.z}, 400)
+                            .easing(TWEEN.Easing.Quadratic.InOut)
+                            .start();
+
+                            new TWEEN.Tween(hand.rotation)
+                            .to({x: -1.7, y: 0.7, z: oldRotation.z}, 400)
+                            .easing(TWEEN.Easing.Quadratic.InOut)
+                            .onComplete(function() {
+                                mouseClickLock = false;
+                            })
+                            .start();
+
+                             // If the previous action is "reaction",
+                            // We need to decrease the interactiveStep by 1
+                            // to get the correct guideText
+                            interactiveStep += 1;
+                            var guideText = interactive.steps[interactiveStep - delay].guideText;
+                            scope.labGuide.createGuideText(guideText);
+                            delay = 0;
+                        })
+                        .start();
+
+                        break;
+                    }
+                    case 'pour': {
+                        mouseClickLock = true;
+                        var object = scope.INTERSECTED;
+                        var hand = scope.labScene.camera.children[1];
+
+                        var oldPos = {
+                            x: hand.position.x,
+                            y: hand.position.y,
+                            z: hand.position.z
+                        };
+                        var oldRotation = {
+                            x: hand.rotation.x,
+                            y: hand.rotation.y,
+                            z: hand.rotation.z
+                        }
+                        var pourPos = {
+                            x: scope.INTERSECTED.position.x,
+                            y: scope.INTERSECTED.position.y + (object.boundingBox.max.y - object.boundingBox.min.y) * object.scaleMultiplier / 2 + 2,
+                            z: scope.INTERSECTED.position.z - (hand.children[1].boundingBox.max.y - hand.children[1].boundingBox.min.y) / 2 - 0.5
+                        }
+
+                        THREE.SceneUtils.detach(hand, scope.labScene.camera, scope.labScene.scene);
+
+                        new TWEEN.Tween(hand.position)
+                        .to({x: pourPos.x, y: pourPos.y, z: pourPos.z}, 400)
+                        .easing(TWEEN.Easing.Quadratic.InOut)
+                        .onComplete(function() {
+                            new TWEEN.Tween(hand.rotation)
+                            .to({x: -0.9, y: 0.25, z: 1.8}, 400)
+                            .easing(TWEEN.Easing.Quadratic.InOut)
+                            .onComplete(function() {
+                                THREE.SceneUtils.attach(hand, scope.labScene.scene, scope.labScene.camera);
+
+                                new TWEEN.Tween(hand.position)
+                                .to({x: oldPos.x, y: oldPos.y, z: oldPos.z}, 400)
+                                .easing(TWEEN.Easing.Quadratic.InOut)
+                                .start();
+
+                                new TWEEN.Tween(hand.rotation)
+                                .to({x: oldRotation.x, y: oldRotation.y, z: oldRotation.z}, 400)
+                                .easing(TWEEN.Easing.Quadratic.InOut)
+                                .onComplete(function() {
+                                    mouseClickLock = false;
+                                })
+                                .start();
+
+                                // If the previous action is "reaction",
+                                // We need to decrease the interactiveStep by 1
+                                // to get the correct guideText
+                                interactiveStep += 1;
+                                var guideText = interactive.steps[interactiveStep - delay].guideText;
+                                scope.labGuide.createGuideText(guideText);
+                                delay = 0;
+                                checkForReaction();
+                            })
+                            .start();
+                        })
+                        .start();
+
+                        break;
+                    }
+                    case "clean": {
+                        var dustpan = scope.labScene.labwares.getUtils("dustpan");
+                        
+                        var width = (scope.INTERSECTED.boundingBox.max.x - scope.INTERSECTED.boundingBox.min.x) * scope.INTERSECTED.scaleMultiplier;
+                        var height = (scope.INTERSECTED.boundingBox.max.y - scope.INTERSECTED.boundingBox.min.y) * scope.INTERSECTED.scaleMultiplier;
+                        var depth = (scope.INTERSECTED.boundingBox.max.z - scope.INTERSECTED.boundingBox.min.z) * scope.INTERSECTED.scaleMultiplier;
+                        var cleanPos = {
+                            x: scope.INTERSECTED.position.x + width / 2,
+                            y: scope.INTERSECTED.position.y,
+                            z: scope.INTERSECTED.position.z + depth / 2
+                        }
+
+                        dustpan.position.set(cleanPos.x, cleanPos.y, cleanPos.z);
+                        dustpan.rotation.z += Math.PI * 3 / 4;
+                        scope.labScene.add(dustpan);
+                        scope.INTERSECTED.scale.set(scope.INTERSECTED.scaleMultiplier / 2, scope.INTERSECTED.scaleMultiplier / 2, scope.INTERSECTED.scaleMultiplier / 2);
+                        
+                        scope.labGuide.resetToEmptyHand();
+                        var hand = scope.labScene.camera.children[1];
+                        THREE.SceneUtils.detach(hand, scope.labScene.camera, scope.labScene.scene);
+                        hand.rotation.set(-1, -0.1, 2.4);
+
+                        new TWEEN.Tween(hand.position)
+                        .to({
+                            x: cleanPos.x - 1.5,
+                            y: cleanPos.y + 1,
+                            z: cleanPos.z - 2
+                        }, 300)
+                        .easing(TWEEN.Easing.Quadratic.InOut)
+                        .onComplete(function() {
+                            var brush = dustpan.children[0];
+                            THREE.SceneUtils.attach(hand, scope.labScene.scene, brush);
+
+                            var oldX = brush.position.x;
+                            var newX = brush.position.x + 100;
+
+                            new TWEEN.Tween(brush.position)
+                            .to({x: newX}, 250)
+                            .easing(TWEEN.Easing.Quadratic.InOut)
+                            .onComplete(function() {
+                                new TWEEN.Tween(brush.position)
+                                .to({x: oldX}, 250)
+                                .easing(TWEEN.Easing.Quadratic.InOut)
+                                .onComplete(function() {         
+                                    new TWEEN.Tween(brush.position)
+                                    .to({x: newX}, 250)
+                                    .easing(TWEEN.Easing.Quadratic.InOut)
+                                    .onComplete(function() {
+                                        new TWEEN.Tween(brush.position)
+                                        .to({x: oldX}, 250)
+                                        .easing(TWEEN.Easing.Quadratic.InOut)
+                                        .onComplete(function() {
+                                            THREE.SceneUtils.attach(scope.INTERSECTED, scope.labScene.scene, dustpan);
+                                            scope.INTERSECTED.position.x = 75;
+                                        })
+                                        .start();
+                                    })
+                                    .start();
+                                })
+                                .start();
+                            })
+                            .start();
+                        })
+                        .start();
+
+                        // If the previous action is "reaction",
+                        // We need to decrease the interactiveStep by 1
+                        // to get the correct guideText
+                        interactiveStep += 1;
+                        var guideText = interactive.steps[interactiveStep - delay].guideText;
+                        scope.labGuide.createGuideText(guideText);
+                        delay = 0;
+                        
+                        break;
+                    }
+                    default: break;
+                }
+            }
+        }
+    }
+
+    function checkForReaction() {
+        var step = interactive.steps[interactiveStep];
+        var chemical = interactive.chemical[step.target - 1];
+        
+        if (step.action == "reaction") {
+            var target = scope.labScene.labwares.interactingTargets[step.target - 1];
+
+            switch (step.reaction.type) {
+                case "change-texture": {
+                    switch (chemical.container) {
+                        case 'spilled-chemical': {
+                            new THREE.TextureLoader()
+                            .load("textures/chemical/sulphur.jpg", function(texture) {
+                                target.children[0].material.map = texture;
+                                target.children[0].material.needsUpdate = true;
+
+                                var r = (target.boundingBox.max.x - target.boundingBox.min.x) / 6;
+                                var h = (target.boundingBox.max.y - target.boundingBox.min.y) / 4;
+                                var pile = new THREE.Mesh(
+                                    new THREE.ConeBufferGeometry(r, h, 32, 32),
+                                    new THREE.MeshPhongMaterial({
+                                        map: texture
+                                    })
+                                )
+                                
+                                target.add(pile);
+                                pile.position.y += h / 2;
+                                pile.position.z += 150;
+
+                                interactiveStep += 1;
+                                delay = 1;
+                            });
+
+                            break;
+                        }
+                        default: break;
+                    }
+                    
+                    break;
+                }
+                default: break;
+            }
+        };
+    }
+
+    // Preview Info Panel
+    function getInfoPanel() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        var panelWidth = 300;
+        var panelHeight = 100;
+        var offsetX =  panelWidth / 4;
+        var offsetY =  panelHeight / 4;
+    
+        var newPos = {x: 0, y: 0};
+        newPos.x = infoMouse.x + offsetX;
+        newPos.y = infoMouse.y + offsetY;
+    
+        // Check for overflow
+        if (newPos.x + panelWidth >= width ) {
+            newPos.x = width - panelWidth - 10;
+        }
+        if (newPos.y + panelHeight >= height) {
+            newPos.y = height - panelHeight - 10;
+        }
+
+        infoPanel.innerHTML = `
+            <h3>${scope.labScene.previewInfo[scope.INTERSECTED.name].name}</h3>
+            <p>${scope.labScene.previewInfo[scope.INTERSECTED.name].desc}</p>`;
+        infoPanel.style.transform = 'translate(' + newPos.x + 'px, ' + newPos.y + 'px)';
+        infoPanel.style.opacity = 1;
+    }
+
+    // Hide element preview data panel
+    function hideInfoPanel() {
+        infoPanel.style.opacity = 0;
+    }
+}
