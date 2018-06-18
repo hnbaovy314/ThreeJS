@@ -63,6 +63,24 @@ LabScene = function(gui, camera, scene) {
         };
     }
 
+    this.destroy = function(object) {
+        scope.scene.remove(object);
+        object.traverse(function(child) {
+            if (child instanceof THREE.Mesh) {
+                child.geometry.dispose();
+                child.material.dispose();
+            };
+
+            if (child.name && scope.previewInfo[child.name]) {
+                delete scope.previewInfo[child.name];
+            }
+        });
+
+        if (object.name && scope.previewInfo[object.name]) {
+            delete scope.previewInfo[object.name];
+        }
+    }
+
     this.init = function() {
         // Build the room
         var roomGeometry = new THREE.Geometry();

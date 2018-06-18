@@ -8,14 +8,7 @@ Labwares = function(labScene, gui) {
 
     this.reset = function() {
         for (var i = scope.interactingTargets.length - 1; i >= 0; i--) {
-            scope.labScene.remove(scope.interactingTargets[i]);
-            
-            scope.interactingTargets[i].traverse(function(child) {
-                if (child instanceof THREE.Mesh) {
-                    child.geometry.dispose();
-                    child.material.dispose();
-                };
-            });
+            scope.labScene.destroy(scope.interactingTargets[i]);
         };
 
         scope.interactingTargets = [];
@@ -348,6 +341,29 @@ Labwares = function(labScene, gui) {
             object.name = "dustpan";
             object.enableInfo = false;
             utils[object.name] = object;
+
+            // Load the trashbin
+            new THREE.MTLLoader()
+            .setPath('/models/')
+            .load('trashbin.mtl', function(materials) {
+                materials.preload();
+                new THREE.OBJLoader()
+                    .setMaterials(materials)
+                    .setPath('models/')
+                    .load('trashbin.obj', function(object) {
+                        object.traverse(function(child) {
+                            if (child instanceof THREE.Mesh) {
+                                child.material.color.setHex(0x696969);                            }
+                        });
+
+                        object.scale.set(0.4, 0.4, 0.4);
+                        object.position.set(-10, 0, -45);
+                        object.rotation.x = -Math.PI / 2;
+                        object.rotation.z = -Math.PI / 2;
+
+                        scope.labScene.add(object);
+                    });
+            });
         });
     }
 

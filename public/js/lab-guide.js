@@ -149,19 +149,15 @@ LabGuide = function(gui, controls, labScene) {
     }
 
     this.resetToEmptyHand = function() {
-        var handAttachment = scope.labScene.camera.children[1].children[1];
+        var hand = scope.labScene.camera.children[1];
+        var handAttachment = hand.children[1];
         
-        scope.labScene.camera.children[1].rotation.set(-1.25, -0.5, 0);
-        scope.labScene.camera.children[1].position.set(2.75, -3, -4.5);
+        hand.rotation.set(-1.25, -0.5, 0);
+        hand.position.set(2.75, -3, -4.5);
     
         if (handAttachment) {
-            scope.labScene.camera.children[1].remove(handAttachment);
-            handAttachment.traverse(function(child) {
-                if (child instanceof THREE.Mesh) {
-                    child.geometry.dispose();
-                    child.material.dispose();
-                };
-            });
+            hand.remove(handAttachment);
+            scope.labScene.destroy(handAttachment);
         };
     }
 

@@ -278,24 +278,32 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                         break;
                     }
                     case "clean": {
+                        var object = scope.INTERSECTED;
+                        object.boundingBox = scope.INTERSECTED.boundingBox;
+                        object.scaleMultiplier = scope.INTERSECTED.scaleMultiplier; 
+                        object.scale.set(object.scaleMultiplier / 2, object.scaleMultiplier / 2, object.scaleMultiplier / 2);
                         var dustpan = scope.labScene.labwares.getUtils("dustpan");
                         
-                        var width = (scope.INTERSECTED.boundingBox.max.x - scope.INTERSECTED.boundingBox.min.x) * scope.INTERSECTED.scaleMultiplier;
-                        var height = (scope.INTERSECTED.boundingBox.max.y - scope.INTERSECTED.boundingBox.min.y) * scope.INTERSECTED.scaleMultiplier;
-                        var depth = (scope.INTERSECTED.boundingBox.max.z - scope.INTERSECTED.boundingBox.min.z) * scope.INTERSECTED.scaleMultiplier;
+                        var width = (object.boundingBox.max.x - object.boundingBox.min.x) * object.scaleMultiplier;
+                        var height = (object.boundingBox.max.y - object.boundingBox.min.y) * object.scaleMultiplier;
+                        var depth = (object.boundingBox.max.z - object.boundingBox.min.z) * object.scaleMultiplier;
                         var cleanPos = {
-                            x: scope.INTERSECTED.position.x + width / 2,
-                            y: scope.INTERSECTED.position.y,
-                            z: scope.INTERSECTED.position.z + depth / 2
+                            x: object.position.x + width / 2,
+                            y: object.position.y,
+                            z: object.position.z + depth / 2
                         }
 
                         dustpan.position.set(cleanPos.x, cleanPos.y, cleanPos.z);
                         dustpan.rotation.z += Math.PI * 3 / 4;
                         scope.labScene.add(dustpan);
-                        scope.INTERSECTED.scale.set(scope.INTERSECTED.scaleMultiplier / 2, scope.INTERSECTED.scaleMultiplier / 2, scope.INTERSECTED.scaleMultiplier / 2);
                         
                         scope.labGuide.resetToEmptyHand();
                         var hand = scope.labScene.camera.children[1];
+                        var oldPos = {
+                            x: hand.position.x,
+                            y: hand.position.y,
+                            z: hand.position.z
+                        }
                         THREE.SceneUtils.detach(hand, scope.labScene.camera, scope.labScene.scene);
                         hand.rotation.set(-1, -0.1, 2.4);
 
@@ -309,6 +317,9 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                         .onComplete(function() {
                             var brush = dustpan.children[0];
                             THREE.SceneUtils.attach(hand, scope.labScene.scene, brush);
+                            hand.position.x = -25;
+                            hand.position.y = 25;
+                            hand.position.z = 25;
 
                             var oldX = brush.position.x;
                             var newX = brush.position.x + 100;
@@ -329,8 +340,44 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                                         .to({x: oldX}, 250)
                                         .easing(TWEEN.Easing.Quadratic.InOut)
                                         .onComplete(function() {
-                                            THREE.SceneUtils.attach(scope.INTERSECTED, scope.labScene.scene, dustpan);
-                                            scope.INTERSECTED.position.x = 75;
+                                            THREE.SceneUtils.attach(object, scope.labScene.scene, dustpan);
+                                            object.position.x = 75;
+
+                                            THREE.SceneUtils.attach(dustpan, scope.labScene.scene, scope.labScene.camera);
+
+                                            new TWEEN.Tween(dustpan.position)
+                                            .to({
+                                                x: oldPos.x,
+                                                y: oldPos.y,
+                                                z: oldPos.z
+                                            }, 400)
+                                            .start();
+
+                                            new TWEEN.Tween(scope.labGuide.controls.target)
+                                            .to({x: -24.995, y: 27.499, z: -27.01}, 700)
+                                            .onComplete(function() {
+                                                THREE.SceneUtils.detach(dustpan, scope.labScene.camera, scope.labScene.scene);
+                                                dustpan.rotation.y = 0.45;
+
+                                                new TWEEN.Tween(dustpan.position)
+                                                .to({
+                                                    x: -12.5,
+                                                    y: 15,
+                                                    z: -42.5
+                                                }, 400)
+                                                .onComplete(function() {
+                                                    THREE.SceneUtils.detach(hand, brush, scope.labScene.scene);
+                                                    THREE.SceneUtils.attach(hand, scope.labScene.scene, scope.labScene.camera);
+                                                    scope.labGuide.resetToEmptyHand();
+                                                    scope.labScene.destroy(dustpan);
+
+                                                    new TWEEN.Tween(scope.labGuide.controls.target)
+                                                    .to({x: -25.01, y: 27.5, z: -27}, 400)
+                                                    .start();
+                                                })
+                                                .start(); 
+                                            })
+                                            .start();
                                         })
                                         .start();
                                     })
@@ -405,6 +452,10 @@ Raycaster = function(gui, controls, labScene, labGuide) {
 
     // Preview Info Panel
     function getInfoPanel() {
+        if (!scope.labScene.previewInfo[scope.INTERSECTED.name]) {
+            return;
+        }
+
         var width = window.innerWidth;
         var height = window.innerHeight;
         var panelWidth = 300;
