@@ -1,0 +1,47 @@
+# Material Count: 4
+
+newmtl Material__10
+Ns 23.529412
+Ka 0.123333 0.123333 0.123333
+Kd 0.990000 0.990000 0.990000
+Ks 0.045000 0.045000 0.045000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Bump textures/Map__9_Noise.jpg
+map_Ka textures/Map__9_Noise.jpg
+map_Kd textures/Map__9_Noise.jpg
+
+newmtl wick
+Ns 23.529412
+Ka 0.103300 0.103300 0.103300
+Kd 0.990000 0.990000 0.990000
+Ks 0.045000 0.045000 0.045000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/Map__2_Checker.jpg
+map_Bump textures/Map__2_Checker.jpg
+map_Ka textures/Map__2_Checker.jpg
+
+newmtl wire_140088225
+Ns 31.372549
+Ka 0.592167 0.592167 0.592167
+Kd 0.549000 0.345100 0.882400
+Ks 0.350000 0.350000 0.350000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl wire_153228214
+Ns 31.372549
+Ka 0.777767 0.777767 0.777767
+Kd 0.600000 0.894100 0.839200
+Ks 0.350000 0.350000 0.350000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2

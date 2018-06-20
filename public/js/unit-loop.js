@@ -1,4 +1,4 @@
-var demoUnit = {
+var unit1 = {
     0: { // Step of the unit
         type: 'theory',
         content: {
@@ -23,25 +23,25 @@ var demoUnit = {
     1: {
         type: 'experiment',
         content: {
-            chemical: [
+            labware: [
                 {
                     id: 1,
-                    name: "Mercury",
+                    name: "spilled-chemical",
+                    chemical: "Mercury",
                     formula: "Hg",
                     type: "metal",
                     texture: "mercury.jpg",
                     form: "liquid",
-                    container: "spilled-chemical",
                     fillScale: -1
                 },
                 {
                     id: 2,
-                    name: "Sulphur",
+                    name: "beaker",
+                    chemical: "Sulphur",
                     formula: "S",
                     type: "metal",
                     texture: "sulphur.jpg",
                     form: "solid",
-                    container: "beaker",
                     fillScale: 1/3
                 }
             ],
@@ -103,6 +103,95 @@ var demoUnit = {
         }
     },
 }
+var unit2 = {
+    0: { // Step of the unit
+        type: 'theory',
+        content: {
+            0: [
+                {
+                    type: 'pure-text',
+                    content: 'Welcome to your first lesson. In this lesson, we will learn about bla bla bla...'
+                },
+                {
+                    type: 'option',
+                    content: ['Mashiro is handsome', "Mashiro is beautiful", "Mashiro is gorgeous"]
+                }
+            ],
+            1: [
+                {
+                    type: 'pure-text',
+                    content: "Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!"
+                }
+            ]
+        }
+    },
+    1: {
+        type: 'experiment',
+        content: {
+            labware: [
+                {
+                    id: 1,
+                    name: "retort",
+                    chemical: "Mercury",
+                    formula: "Hg",
+                    type: "metal",
+                    texture: "mercury.jpg",
+                    form: "liquid",
+                    with: [2, 3]
+                    },
+                {
+                    id: 2,
+                    name: "beaker",
+                    chemical: "Sulphur",
+                    formula: "S",
+                    type: "metal",
+                    texture: "sulphur.jpg",
+                    form: "solid",
+                    fillScale: 1/3
+                },
+                {
+                    id: 3,
+                    name: "burner"
+                }
+            ],
+            steps: [
+                {
+                    action: "pick-up",
+                    target: 2,
+                    guideText: [
+                        "123",
+                        "Mashiro best girl!"
+                    ]
+                },
+                {
+                    action: "pour",
+                    target: 1,
+                    guideText: [
+                        "456",
+                        "Mashiro best girl!"
+                    ]
+                }
+            ],
+        },
+    },
+    2: {
+        type: 'theory',
+        content: {
+            0: [
+                {
+                    type: 'pure-text',
+                    content: 'AAAAAAAAA'
+                }
+            ],
+            1: [
+                {
+                    type: 'pure-text',
+                    content: "HAHAHAHAHAHA"
+                }
+            ]
+        }
+    },
+}
 
 UnitLoop = function(camera, controls, labScene, labGuide) {
     
@@ -122,8 +211,18 @@ UnitLoop = function(camera, controls, labScene, labGuide) {
         scope.labGuide.moveToDesk();
         scope.labGuide.raycaster.prevPos = "lab-desk";
 
-        currentUnit = demoUnit;
+        currentUnit = unit1;
         startUnit('Unit 1');
+    }
+
+    this.unit2 = function(event) {
+        event.preventDefault();
+
+        scope.labGuide.moveToDesk();
+        scope.labGuide.raycaster.prevPos = "lab-desk";
+
+        currentUnit = unit2;
+        startUnit('Unit 2');
     }
 
     this.init = function() {
@@ -226,7 +325,7 @@ UnitLoop = function(camera, controls, labScene, labGuide) {
                     break;
                 }
                 case 'experiment': {
-                    scope.labScene.addLabware(currentStep.content.chemical);
+                    scope.labScene.addLabware(currentStep.content.labware);
                     scope.labGuide.raycaster.enableInteractingWithLabware(currentStep.content);
 
                     needUpdate = false;

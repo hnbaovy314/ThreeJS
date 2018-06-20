@@ -24,13 +24,12 @@ LabScene = function(gui, camera, scene) {
         return scope.scene.getObjectByName(name);
     }
 
-    this.addLabware = function(chemical) {
+    this.addLabware = function(labwares) {
         var separation = 5;
-        var totalWidth = separation * (chemical.length - 1);
+        var totalWidth = separation * (labwares.length - 1);
         var containers = [];
-        for (var i = 0; i < chemical.length; i++) {     
-            var container = scope.labwares.getLabware(chemical[i]);
-            scope.scene.add(container);
+        for (var i = 0; i < labwares.length; i++) {     
+            var container = scope.labwares.getLabware(labwares[i]);
             containers.push(container);
 
             var height = container.boundingBox.max.y - container.boundingBox.min.y;
@@ -45,13 +44,111 @@ LabScene = function(gui, camera, scene) {
             // Add preview info
             if (container.enableInfo) {
                 container.name = "container-" + i;
-                container.contentId = chemical[i].id;
+                container.contentId = labwares[i].id;
                 scope.previewInfo[container.name] = {
-                    name: chemical[i].name + " (" + chemical[i].formula + ")",
-                    desc: "A " + chemical[i].container + " that contains " + chemical[i].form + " " + chemical[i].name
+                    name: labwares[i].chemical + " (" + labwares[i].formula + ")",
+                    desc: "A " + labwares[i].name + " that contains " + labwares[i].form + " " + labwares[i].chemical
                 };
+            }           
 
-                scope.raycastTarget.push(container);
+            scope.scene.add(container);
+            scope.raycastTarget.push(container);
+            var helper = new THREE.Box3Helper(new THREE.Box3().setFromObject(container), 0x000000);
+            scope.scene.add(helper);
+        }
+
+        for (var i = 0; i < labwares.length; i++) {
+            if (labwares[i].with) {
+                var parentObject = containers[labwares[i].id - 1];
+                
+                switch (labwares[i].name) {
+                    case 'retort': {
+                        if (labwares[i].with.length > 2) {
+                            console.log("Invalid input.");
+                            return;
+                        }
+
+                        for (var j = 0; j < labwares[i].with.length; j++) {
+                            var withObject = containers[labwares[i].with[j] - 1];
+                            switch (withObject.name) {
+                                case "burner": {
+                                    // Get the stand of the retort
+                                    var stand = parentObject.children[1];
+                                    stand.boundingBox = new THREE.Box3().setFromObject(stand);
+                                    var center = stand.boundingBox.getCenter();
+                                    var standHeight = stand.boundingBox.max.y - stand.boundingBox.min.y;
+                                    var burnerHeight = (withObject.boundingBox.max.y - withObject.boundingBox.min.y) * withObject.scaleMultiplier;
+                                    var burnerWidth = (withObject.boundingBox.max.z - withObject.boundingBox.min.z) * withObject.scaleMultiplier;
+
+                                    withObject.position.y = center.y;
+                                    withObject.position.z = center.z;
+
+                                    var platform = new THREE.Mesh(
+                                        new THREE.BoxBufferGeometry(
+                                            burnerWidth,
+                                            (standHeight - burnerHeight) / 2,
+                                            burnerWidth
+                                        ),
+                                        new THREE.MeshPhongMaterial({
+                                            side: THREE.DoubleSide
+                                        })
+                                    );
+
+                                    platform.position.x = center.x;
+                                    platform.position.y = center.y - (standHeight - burnerHeight) / 4 - burnerHeight / 2;
+                                    platform.position.z = center.z;
+
+                                    scope.scene.add(platform);
+                                    miscMesh.push(platform);
+
+                                    break;
+                                }
+                                default: {
+                                    var parentBoundingBox = new THREE.Box3().setFromObject(parentObject);
+                                    var center = parentBoundingBox.getCenter();
+                                    
+                                    withObject.position.y = center.y;
+                                    withObject.position.z = center.z - (parentBoundingBox.max.z - parentBoundingBox.min.z) / 2;
+                                    withObject.rotation.x = 1.1;
+
+                                    var withObjectBoundingBox = new THREE.Box3().setFromObject(withObject);
+                                    var withObjectHeight = withObjectBoundingBox.max.y - withObjectBoundingBox.min.y;
+                                    var withObjectWidth = withObjectBoundingBox.max.z - withObjectBoundingBox.min.z;
+
+                                    // Erm... The platform pillar?
+                                    var height = (parentObject.boundingBox.max.y - parentObject.boundingBox.min.y) * parentObject.scaleMultiplier;
+                                    var width = (parentObject.boundingBox.max.z - parentObject.boundingBox.min.z) * parentObject.scaleMultiplier;
+                                    var platform = new THREE.Mesh(
+                                        new THREE.BoxBufferGeometry(
+                                            withObjectWidth,
+                                            (height - withObjectHeight) / 2,
+                                            withObjectWidth
+                                        ),
+                                        new THREE.MeshPhongMaterial({
+                                            side: THREE.DoubleSide
+                                        })
+                                    );
+
+                                    platform.position.x = center.x;
+                                    platform.position.y = center.y - (height - withObjectHeight) / 4 - withObjectHeight / 2;
+                                    platform.position.z = center.z - width / 2;
+
+                                    scope.scene.add(platform);
+                                    miscMesh.push(platform);
+
+                                    break;
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                    default: {
+                        // Hmm
+
+                        break;
+                    }
+                }
             }
         }
     }
@@ -61,6 +158,11 @@ LabScene = function(gui, camera, scene) {
             delete scope.previewInfo[scope.labwares.interactingTargets[i].name];
             scope.raycastTarget.pop();
         };
+
+        for (var i = miscMesh.length - 1; i >= 0; i--) {
+            scope.destroy(miscMesh[i]);
+        }
+        miscMesh = [];
     }
 
     this.destroy = function(object) {
@@ -484,5 +586,11 @@ LabScene = function(gui, camera, scene) {
         x: -34,
         y: 19.75,
         z: -27.5
+    }
+
+    var miscMesh = [];
+
+    function recalculateCenter(containers) {
+
     }
 }

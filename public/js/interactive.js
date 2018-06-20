@@ -67,17 +67,12 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                 scope.INTERSECTED = null;
             }
         }
-
-        if (interactive && interactiveStep > interactive.steps.length - 1) {
-            scope.labGuide.unitLoop.readyForNextStep = true;
-            enableInteractingWithLabware = false;
-        }
     }
 
     this.enableInteractingWithLabware = function(content) {
         enableInteractingWithLabware = true;
         interactive = {
-            chemical: content.chemical,
+            labwares: content.labware,
             steps: content.steps
         }
 
@@ -140,8 +135,8 @@ Raycaster = function(gui, controls, labScene, labGuide) {
         }
 
         if (enableInteractingWithLabware && !mouseClickLock) {
-            var chemical = interactive.chemical[interactive.steps[interactiveStep].target - 1]; 
-            if (scope.INTERSECTED && scope.INTERSECTED.contentId == chemical.id) {
+            var labware = interactive.labwares[interactive.steps[interactiveStep].target - 1]; 
+            if (scope.INTERSECTED && scope.INTERSECTED.contentId == labware.id) {
                 switch (interactive.steps[interactiveStep].action) {
                     case 'pick-up': {
                         mouseClickLock = true;                      
@@ -175,7 +170,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                             THREE.SceneUtils.attach(object, scope.labScene.scene, hand);
                             THREE.SceneUtils.attach(hand, scope.labScene.scene, scope.labScene.camera);
 
-                            switch (chemical.container) {
+                            switch (labware.name) {
                                 case "test-tube": {
                                     object.position.x -= 0.05;
                                     object.position.y += 0.05;
@@ -204,13 +199,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                             })
                             .start();
 
-                             // If the previous action is "reaction",
-                            // We need to decrease the interactiveStep by 1
-                            // to get the correct guideText
-                            interactiveStep += 1;
-                            var guideText = interactive.steps[interactiveStep - delay].guideText;
-                            scope.labGuide.createGuideText(guideText);
-                            delay = 0;
+                            nextInteractiveStep();
                         })
                         .start();
 
@@ -262,13 +251,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                                 })
                                 .start();
 
-                                // If the previous action is "reaction",
-                                // We need to decrease the interactiveStep by 1
-                                // to get the correct guideText
-                                interactiveStep += 1;
-                                var guideText = interactive.steps[interactiveStep - delay].guideText;
-                                scope.labGuide.createGuideText(guideText);
-                                delay = 0;
+                                nextInteractiveStep();
                                 checkForReaction();
                             })
                             .start();
@@ -374,6 +357,8 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                                                     new TWEEN.Tween(scope.labGuide.controls.target)
                                                     .to({x: -25.01, y: 27.5, z: -27}, 400)
                                                     .start();
+
+                                                    nextInteractiveStep();
                                                 })
                                                 .start(); 
                                             })
@@ -388,14 +373,6 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                             .start();
                         })
                         .start();
-
-                        // If the previous action is "reaction",
-                        // We need to decrease the interactiveStep by 1
-                        // to get the correct guideText
-                        interactiveStep += 1;
-                        var guideText = interactive.steps[interactiveStep - delay].guideText;
-                        scope.labGuide.createGuideText(guideText);
-                        delay = 0;
                         
                         break;
                     }
@@ -405,16 +382,41 @@ Raycaster = function(gui, controls, labScene, labGuide) {
         }
     }
 
+    function nextInteractiveStep() {
+        interactiveStep += 1;
+
+        // If the previous action is "reaction",
+        // We need to decrease the interactiveStep by 1
+        // to get the correct guideText
+        if (interactiveStep > interactive.steps.length - 1) {
+            scope.labGuide.unitLoop.readyForNextStep = true;
+            enableInteractingWithLabware = false;
+        }
+
+        if (interactive.steps[interactiveStep - delay]) {
+            var guideText = interactive.steps[interactiveStep - delay].guideText;
+            if (guideText) {
+                scope.labGuide.createGuideText(guideText);
+            }
+        }
+        
+        delay = 0;
+    }
+
     function checkForReaction() {
+        if (!enableInteractingWithLabware) {
+            return;
+        }
+
         var step = interactive.steps[interactiveStep];
-        var chemical = interactive.chemical[step.target - 1];
+        var labware = interactive.labwares[step.target - 1];
         
         if (step.action == "reaction") {
             var target = scope.labScene.labwares.interactingTargets[step.target - 1];
 
             switch (step.reaction.type) {
                 case "change-texture": {
-                    switch (chemical.container) {
+                    switch (labware.name) {
                         case 'spilled-chemical': {
                             new THREE.TextureLoader()
                             .load("textures/chemical/sulphur.jpg", function(texture) {
