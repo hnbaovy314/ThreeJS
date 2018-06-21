@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./bin/www",
-    "nodemon": "nodemon ./bin/www"
+    "nodemon": "nodemon ./bin/www --watch *.js -L"
   },
   "repository": {
     "type": "git",
@@ -37,8 +37,9 @@
   },
   "devDependencies": {
     "@tweenjs/tween.js": "^17.2.0",
+    "body-parser": "^1.18.3",
     "cookie-parser": "^1.4.3",
-    "morgan": "^1.9.0",
-    "nodemon": "^1.17.4"
+    "jquery": "^3.3.1",
+    "morgan": "^1.9.0"
   }
 }

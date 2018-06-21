@@ -1,3 +1,7 @@
+import {getElementInfo, clearDiv, getElementImg} from './element-tools.js';
+import {onElementImg, onCrystalStructure} from './eventListener.js'
+import {getAllElements, getElementGroup} from './dataRetriever.js'
+
 var demoData = [
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
@@ -25,7 +29,7 @@ var demoTable = [
 ];
 
 var container, stats, raycaster, meshArr = []; // Array to hold all meshes that needs disposing
-var currentCamera, defaultCamera, currentScene, currentRenderer, currentControls, defaultControls;
+var currentCamera, defaultCamera, currentScene, currentRenderer, currentControls, defaultControls, currentRaycastTarget;
 var tableScene, tableRenderer;
 var mouse = new THREE.Vector2(), previewMouse = new THREE.Vector2(),
     INTERSECTED;
@@ -34,7 +38,7 @@ var mouse = new THREE.Vector2(), previewMouse = new THREE.Vector2(),
 // Variable
 var periodicTable = [];
 var elementBoxSize = 3;
-var gridSeparation = 3.5;
+var gridSeparation = 4;
 var elementTextGridSize = 0.8;
 var fontUrl = "fonts/helvetiker_bold.typeface.json";
 var firstSize = 0.8, secondSize = 0.3, thirdSize = 0.25, fourthSize = 0.15;
@@ -47,11 +51,18 @@ previewPanel.style.width = previewPanelSize + 'px';
 previewPanel.style.height = previewPanelSize + 'px';
 previewPanel.style.opacity = 0;
 
-const orbit = ['1s', '2s', '2p', '3s', '3p', '3d', '4s', '4p', '4d', '5s', '5p',
-                '4f', '5d', '6s', '6p', '7s', '5f', '6d', '7p', '8s'];
+const eleOrbit = [['1s'],
+                ['2s', '2p'],
+                ['3s', '3p', '3d'],
+                ['4s', '4p', '4d', '4f'],
+                ['5s', '5p', '5d', '5f'],
+                ['6s', '6p', '6d'],
+                ['7s', '7p']]
+
+const orbit = ['1s', '2s', '2p', '3s', '3p', '3d', '4s', '4p', '4d', '4f', '5s', '5p',
+                '5d', '5f', '6s', '6p', '6d', '7s', '7p'];
 const orbitNum = [2, 2, 6, 2, 6, 10, 2, 6, 10, 2, 6,
                   14, 10, 2, 6, 2, 14, 10, 6, 2];
-
 // Build data screen
 var elementCamera, elementScene, elementRenderer, elementControls; // Camera, scene, renderer & controls for element model
 var dataScreen = document.createElement('div');
@@ -62,44 +73,32 @@ dataScreen.setAttribute('id', 'data-screen');
 // Tham khảo cách t build ở trên (cái previewPanel ấy)
 // Có gì thì hỏi
 // T về ngủ
-// Add left and right column
-newElement = document.createElement('div');
-newElement.setAttribute('id', 'ds-left-column');
-dataScreen.appendChild(newElement);
-newElement = document.createElement('div');
-newElement.setAttribute('id', 'ds-right-column');
-dataScreen.appendChild(newElement);
-// Add close button
-var newElement = document.createElement('div');
-newElement.setAttribute('id', 'ds-close-button');
-newElement.appendChild(document.createElement('b'));
-newElement.appendChild(document.createElement('b'));
-newElement.appendChild(document.createElement('b'));
-newElement.appendChild(document.createElement('b'));
-dataScreen.appendChild(newElement);
-
-function getAllElements() {
-  var result = [];
-  $.ajax({
-    url: '/getE',
-    type: 'GET',
-    async: false,
-    success: function(data) {
-      console.log("Data received");
-      result = data;
-    }
-  });
-  return result;
-}
 
 var elements = getAllElements();
+var phaseFilter = getElementGroup('phase');
+var catFilter = getElementGroup('category');
+
+
+var phaseHolder, catHolder = null;
+var filterHolder = [];
+var filterOn = '';
 
 init();
 animate();
 
 function init() {
     container = document.createElement('div');
+    container.setAttribute('id', 'main-container');
     document.body.appendChild(container);
+    //filter controller
+    createFilterController();
+    addColAndCloseBtn();
+
+    //Element Model
+    calcEPerShell();
+    for (var i=0; i < elements.length; i++){
+        elements[i].eConf = make1DArray(elements[i].eConf);
+    }
 
     // Init for default camera, used throughout the app
     defaultCamera = new THREE.PerspectiveCamera(
@@ -108,18 +107,18 @@ function init() {
         1,
         100
     );
-    defaultCamera.position.z = 0;
+    defaultCamera.position.set(0, 0, 0);
     currentCamera = defaultCamera;
 
     // Init for periodic table scene as the default scene
     tableScene = new THREE.Scene();
-    tableScene.background = new THREE.Color(0xf2f2f2);
+    tableScene.background = new THREE.Color(0xecf0f1);
     currentScene = tableScene;
 
     tableRenderer = new THREE.WebGLRenderer();
     tableRenderer.setPixelRatio(window.devicePixelRatio);
     tableRenderer.setSize(window.innerWidth, window.innerHeight);
-    tableRenderer.setClearColor(0xF2F2F2, 1);
+    tableRenderer.setClearColor(0xecf0f1, 1);
     currentRenderer = tableRenderer;
 
     container.appendChild(currentRenderer.domElement);
@@ -163,7 +162,7 @@ function init() {
     elementRenderer = new THREE.WebGLRenderer();
     elementRenderer.setSize(window.innerWidth, window.innerHeight);
     elementRenderer.setPixelRatio(window.devicePixelRatio);
-    elementRenderer.setClearColor(0xF2F2F2, 1);
+    elementRenderer.setClearColor(0xecf0f1, 1);
     var erContainer = document.createElement('div'); // Element Renderer Container
     erContainer.setAttribute('id', 'ds-er-container');
     erContainer.appendChild(elementRenderer.domElement);
@@ -178,12 +177,15 @@ function init() {
     elementControls.maxDistance = 80;
     elementControls.noPan = true;
 
+    var spotLightGroup = new THREE.Group();
+
     var spotLight1 = new THREE.SpotLight(0xF2F2F2);
     spotLight1.position.set(0, 0, 10);
     spotLight1.penumbra = 1;
     spotLight1.lookAt = new THREE.Vector3(0, 0, 0);
     spotLight1.castShadow = true;
     spotLight1.intensity = 1;
+    spotLight1.name = 'spotLight1';
 
     var spotLight2 = new THREE.SpotLight(0xF2F2F2);
     spotLight2.position.set(0, 0, -10);
@@ -191,20 +193,254 @@ function init() {
     spotLight2.lookAt = new THREE.Vector3(0, 0, 0);
     spotLight2.castShadow = true;
     spotLight2.intensity = 1;
+    spotLight2.name = 'spotLight2';
 
     elementScene.add(spotLight1);
     elementScene.add(spotLight2);
 
     // Performance Stats
-    stats = new Stats();
-    container.appendChild(stats.dom);
+    // stats = new Stats();
+    // container.appendChild(stats.dom);
+
+    //BGM - .mp3 only
+    // loadBGM('sound.mp3');
 
     // Add listeners
     document.addEventListener('click', onTableBoxClick, false);
-    document.getElementById('ds-close-button').addEventListener('click', onElementModelCloseButtonClick, false);
 
     document.addEventListener('mousemove', onDocumentMouseMove, false);
     window.addEventListener('resize', onWindowResize, false);
+
+    document.getElementById('ds-close-button').addEventListener('click', onElementModelCloseButtonClick, false);
+
+    var phaseBtn = document.getElementsByClassName('phase-button');
+    for (var i = 0; i < phaseBtn.length; i++){
+        phaseBtn[i].addEventListener('mouseenter', onPhaseHover, false);
+        phaseBtn[i].addEventListener('mouseleave', onPhaseLeave, false);
+        phaseBtn[i].addEventListener('click', onPhaseClick, false);
+    }
+
+    var catBtn = document.getElementsByClassName('cat-button');
+    for (var i = 0; i < catBtn.length; i++){
+        catBtn[i].addEventListener('mouseenter', onCatHover, false);
+        catBtn[i].addEventListener('mouseleave', onCatLeave, false);
+    }
+}
+
+function addColAndCloseBtn() {
+    // Add left and right column
+    var newElement = document.createElement('div');
+    var subInfo = document.createElement('div');
+    var infoText = document.createElement('div');
+    var subBtn = document.createElement('div');
+    var iconArr = [
+            '<i class="far fa-image fa-2x"></i>',
+            '<i class="fas fa-cubes fa-2x"></i>',
+            '<i class="fas fa-list fa-2x"></i>',
+            '<i class="fab fa-wikipedia-w fa-2x"></i>'
+    ];
+    newElement.setAttribute('id', 'ds-left-column');
+    subInfo.setAttribute('id', 'left-main-info');
+    infoText.setAttribute('id', 'left-info-text');
+    subInfo.appendChild(infoText);
+    newElement.appendChild(subInfo);
+    subInfo = document.createElement('div');
+    subInfo.setAttribute('id', 'left-sub-info');
+    subBtn.setAttribute('id', 'left-info-btn');
+    for (var i=0; i < 4; i++) {
+        var btn = document.createElement('span');
+        btn.setAttribute('class', 'info-button');
+        btn.setAttribute('id', `infoBtn${i}`);
+        btn.innerHTML = iconArr[i];
+        subBtn.appendChild(btn);
+    }
+
+    newElement.appendChild(subBtn);
+    newElement.appendChild(subInfo);
+    dataScreen.appendChild(newElement);
+    // newElement = document.createElement('div');
+    // newElement.setAttribute('id', 'ds-right-column');
+    // dataScreen.appendChild(newElement);
+    // Add close button
+    var newElement = document.createElement('div');
+    newElement.setAttribute('id', 'ds-close-button');
+    newElement.appendChild(document.createElement('b'));
+    newElement.appendChild(document.createElement('b'));
+    newElement.appendChild(document.createElement('b'));
+    newElement.appendChild(document.createElement('b'));
+    dataScreen.appendChild(newElement);
+}
+
+function calcEPerShell(){
+    for (var i=0; i < elements.length; i++) {
+        var ePerShell = [];
+        for (var j=0; j < elements[i].eConf.length; j++){
+            ePerShell.push(elements[i].eConf[j].reduce((a, b) => a+b));
+        }
+        elements[i]['ePerShell'] = ePerShell;
+    }
+}
+
+function make1DArray(arr){
+    var result = [];
+    for (var i=0; i < arr.length; i++){
+        for (var j=0; j < arr[i].length; j++){
+            result.push(arr[i][j]);
+        }
+    }
+    return result;
+}
+
+function createFilterController() {
+    //for the filter controller
+    var filter = document.createElement('div');
+    var temp;
+    filter.setAttribute('id', 'filter-controller');
+
+    var phase = document.createElement('div');
+    phase.setAttribute('class', 'filter-block');
+    phase.setAttribute('id', 'phase-filter');
+    for (var i=0; i < phaseFilter.length; i++){
+        temp = document.createElement('button');
+        temp.setAttribute('id', `phase${i}`);
+        temp.setAttribute('class', 'phase-button');
+        temp.innerText = phaseFilter[i];
+        phase.appendChild(temp);
+    }
+    filter.appendChild(phase);
+
+    var cat = document.createElement('div');
+    phase.setAttribute('class', 'filter-block');
+    phase.setAttribute('id', 'category-filter');
+    for (var i=0; i < catFilter.length; i++){
+        temp = document.createElement('button');
+        temp.setAttribute('id', `cat${i}`);
+        temp.setAttribute('class', 'cat-button');
+        temp.innerText = catFilter[i];
+        phase.appendChild(temp);
+    }
+    filter.appendChild(cat);
+
+    container.appendChild(filter);
+}
+
+function onCatHover(event) {
+    var catID = event.target.id.slice(3);
+    var cat = catFilter[catID];
+    for (var i = 0; i < elements.length; i++) {
+        if (elements[i].cat === cat) {
+            var tmpEleBox = tableScene.getObjectByName(`box${elements[i].z}`);
+            var tmpElePlane = tableScene.getObjectByName(`plane${elements[i].z}`);
+            tmpElePlane.opacity = 0;
+            // var z1 = tmpElePlane.position.z + 3;
+            // var z2 = tmpEleBox.position.z + 3;
+            // var tween1 = new TWEEN.Tween(tmpElePlane.position)
+            //     .to({ z: z1 }, 100)
+            //     .easing(TWEEN.Easing.Quadratic.Out).
+            //     start();
+            // var tween2 = new TWEEN.Tween(tmpEleBox.position)
+            //     .to({ z: z2 }, 100)
+            //     .easing(TWEEN.Easing.Quadratic.Out).
+            //     start();
+            tmpElePlane.position.z += 3;
+            tmpEleBox.position.z += 3;
+            filterHolder.push(elements[i]);
+        }
+    }
+    filterOn = event.target.id;
+}
+
+function onCatLeave(event) {
+    if (filterOn != event.target.id) {
+        return;
+    }
+    var catID = event.target.id.slice(3);
+    var cat = catFilter[catID];
+    for (var i = 0; i < filterHolder.length; i++) {
+        var tmpEleBox = tableScene.getObjectByName(`box${filterHolder[i].z}`);
+        var tmpElePlane = tableScene.getObjectByName(`plane${filterHolder[i].z}`);
+        tmpEleBox.opacity = 1;
+        // var z1 = tmpElePlane.position.z - 3;
+        // var z2 = tmpEleBox.position.z - 3;
+        // var tween1 = new TWEEN.Tween(tmpElePlane.position)
+        //     .to({ z: z1 }, 100)
+        //     .easing(TWEEN.Easing.Quadratic.In).
+        //     start();
+        // var tween2 = new TWEEN.Tween(tmpEleBox.position)
+        //     .to({ z: z2 }, 100)
+        //     .easing(TWEEN.Easing.Quadratic.In).
+        //     start();
+        tmpElePlane.position.z -= 3;
+        tmpEleBox.position.z -= 3;
+    }
+    filterHolder.length = 0;
+    filterOn = '';
+}
+
+function onPhaseHover(event) {
+    if(filterOn != '') {
+        return;
+    }
+    var phaseID = event.target.id.slice(5);
+    var phase = phaseFilter[phaseID];
+    for (var i = 0; i < elements.length; i++) {
+        if (elements[i].phase === phase) {
+            var tmpEleBox = tableScene.getObjectByName(`box${elements[i].z}`);
+            var tmpElePlane = tableScene.getObjectByName(`plane${elements[i].z}`);
+            tmpElePlane.position.z += 3;
+            tmpEleBox.position.z += 3;
+            filterHolder.push(elements[i]);
+        }
+    }
+    filterOn = event.target.id;
+}
+
+function onPhaseLeave(event) {
+    if (filterOn != event.target.id) {
+        return;
+    }
+    var phaseID = event.target.id.slice(5);
+    var phase = phaseFilter[phaseID];
+    for (var i = 0; i < filterHolder.length; i++) {
+        var tmpEleBox = tableScene.getObjectByName(`box${filterHolder[i].z}`);
+        var tmpElePlane = tableScene.getObjectByName(`plane${filterHolder[i].z}`);
+        // var z1 = tmpElePlane.position.z - 3;
+        // var z2 = tmpEleBox.position.z - 3;
+        // var tween1 = new TWEEN.Tween(tmpElePlane.position)
+        //     .to({ z: z1 }, 200)
+        //     .easing(TWEEN.Easing.Quadratic.In).
+        //     start();
+        // var tween2 = new TWEEN.Tween(tmpEleBox.position)
+        //     .to({ z: z2 }, 200)
+        //     .easing(TWEEN.Easing.Quadratic.In).
+        //     start();
+        tmpElePlane.position.z -= 3;
+        tmpEleBox.position.z -= 3;
+    }
+    filterHolder.length = 0;
+    filterOn = '';
+}
+
+function onPhaseClick(event) {
+    var phaseID = event.target.id.slice(5);
+    if (phaseHolder === phaseID) {
+        for(i = 0; i < filterHoler.length; i++){
+            var tmpEleBox = tableScene.getObjectByName(`box${elements[filterHoler[i]].z}`);
+            var tmpElePlane = tableScene.getObjectByName(`plane${elements[filterHolder[i]].z}`);
+            tmpEleBox.opacity = 1;
+            tmpEleBox.position.z -= 3;
+            tmpElePlane.position.z -= 3;
+        }
+    }
+    else {
+        for(i = 0; i < filterHoler.length; i++){
+            var tmpEleBox = tableScene.getObjectByName(`box${elements[filterHoler[i]].z}`);
+            var tmpElePlane = tableScene.getObjectByName(`plane${elements[filterHolder[i]].z}`);
+            tmpEleBox.opacity = 1;
+            tmpEleBox.position.z -= 3;
+            tmpElePlane.position.z -= 3;
+        }
+    }
 }
 
 function onWindowResize() {
@@ -216,11 +452,13 @@ function onWindowResize() {
 function onDocumentMouseMove(event) {
     event.preventDefault();
 
+    var filterCtrlHeight = $('#filter-controller').outerHeight(true);
+
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    mouse.y = -((event.clientY - filterCtrlHeight) / window.innerHeight) * 2 + 1;
 
     previewMouse.x = event.clientX;
-    previewMouse.y = event.clientY;
+    previewMouse.y = event.clientY - filterCtrlHeight;
 }
 
 // Listening for click event, combining with the INTERSECTED
@@ -236,7 +474,8 @@ function onTableBoxClick(event) {
         // Return the raycast, INTERSECTED and preview panel to clean state
         currentRaycastTarget = null;
         INTERSECTED.children[0].material.opacity = 0.25;
-        var atomicNumber = INTERSECTED.material.name;
+        var atomicNumber = INTERSECTED.name.slice(3);
+        var element = elements[atomicNumber-1];
         INTERSECTED = null;
         hidePreviewPanel();
         document.body.style.cursor = "auto";
@@ -246,13 +485,33 @@ function onTableBoxClick(event) {
 
         getElementModel(atomicNumber);
 
+        var infoPanelWidth = ($('#ds-left-column').outerWidth(true)/window.innerHeight)*2+1;
         // Switch to element model camera, scene & ...
         currentCamera = elementCamera;
         currentScene = elementScene;
         currentRenderer = elementRenderer;
 
+        currentScene.position.x += infoPanelWidth;
+        currentCamera.position.x += infoPanelWidth;
+
         currentControls = elementControls;
         currentCamera.position.z = 60;
+        var element = elements[atomicNumber-1];
+        var eConfig = calcElectronConf(atomicNumber, element.eConf);
+        getElementInfo(element, 'left-info-text', eConfig);
+        getElementImg('left-sub-info', atomicNumber);
+        $('#infoBtn0').addClass('infoBtn-focus');
+        $('#infoBtn0').on('click', function() {
+            onElementImg(atomicNumber);
+        });
+        $('#infoBtn1').on('click', function() {
+            $('.infoBtn-focus').removeClass('infoBtn-focus');
+            $('#infoBtn1').addClass('infoBtn-focus');
+            onCrystalStructure(element.crystalStructure);
+        });
+        $('#infoBtn3').on('click', function() {
+            var wnd = window.open(`https://en.wikipedia.org/wiki/${element.name}`);
+        });
     }
 }
 
@@ -265,6 +524,8 @@ function onElementModelCloseButtonClick(event) {
 
     dataScreen.style.transform = 'translateY(100vh)';
     dataScreen.style.opacity = 0;
+    clearDiv('left-info-text');
+    clearDiv('left-sub-info');
 
     // Switch to table camera, scene & ...
     currentCamera = defaultCamera;
@@ -273,15 +534,15 @@ function onElementModelCloseButtonClick(event) {
     currentControls = defaultControls;
     currentRaycastTarget = periodicTable;
 
-    currentControls.target.set(0, 0, -50);
-    currentCamera.position.z = -15;
-    new TWEEN.Tween(currentCamera.position)
-        .to({z: 0}, 1000)
-        .easing(TWEEN.Easing.Exponential.Out)
-        .start();
-
     // Remove element model from elementScene
     destroyElementModel();
+
+    currentControls.reset();
+    currentControls.target.set(0, 0, -50);
+    currentCamera.position.x = 0;
+    currentCamera.position.y = 0;
+    currentCamera.position.z = 0;
+    currentCamera.updateProjectionMatrix();
 }
 
 // Get individual element
@@ -298,7 +559,7 @@ function getElement(size, element) {
 
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#A49A87";
+    ctx.fillStyle = "#2c3e50";
     // Atomic Number
     ctx.font = "bold 32pt helvetica";
     ctx.fillText(element.z, canvasSize / 2, canvasSize / 7);
@@ -326,7 +587,6 @@ function getElement(size, element) {
     var boxMaterial = new THREE.MeshBasicMaterial({
         opacity: 0,
         transparent: true,
-        name: element.z
     });
     var edges = new THREE.EdgesGeometry(boxGeometry);
     var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x1A1A1A}));
@@ -336,6 +596,8 @@ function getElement(size, element) {
 
     var plane = new THREE.Mesh(planeGeometry, planeMaterial);
     var box = new THREE.Mesh(boxGeometry, boxMaterial);
+    box.name = `box${element.z}`;
+    plane.name = `plane${element.z}`;
     box.add(line);
 
     group.add(plane);
@@ -344,6 +606,15 @@ function getElement(size, element) {
     periodicTable.push(box);
 
     return group;
+}
+
+function loadBGM(link){
+    document.write('<audio loop autoplay="autoplay">');
+    document.write('<source src="'+link+'" type="audio/mpeg">');
+    document.write('<!--[if lt IE 9]>');
+    document.write('<bgsound src="'+link+'" loop="100">');
+    document.write('<![endif]-->');
+    document.write('</audio>');
 }
 
 function getTableHeader(width, positionY) {
@@ -414,19 +685,10 @@ function getElementGrid(table) {
 //   }
 // }
 
-function calcElectronConf(z) {
+function calcElectronConf(z, eConf) {
   var eConfig = '';
-  var num = z;
-  for (i=0; i < orbit.length; i++) {
-    num -= orbitNum[i];
-    if (num <= 0){
-      var tmp = num + orbitNum[i];
-      eConfig = eConfig.concat(orbit[i], tmp.toString());
-      break;
-    }
-    else {
-      eConfig = eConfig.concat(orbit[i], orbitNum[i].toString(), ' ');
-    }
+  for (var i=0; i < eConf.length; i++){
+      eConfig = eConfig.concat(orbit[i], eConf[i].toString(), ' ');
   }
   if (z > 10 & z <= 18){
     eConfig = eConfig.replace('1s2 2s2 2p6 ', '[Ne]');
@@ -438,10 +700,14 @@ function calcElectronConf(z) {
     eConfig = eConfig.replace('1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 ', '[Kr]');
   }
   else if (z > 54 & z <= 86){
-    eConfig = eConfig.replace('1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 ', '[Xe]');
+    var f4 = eConfig.match(/4f[1-9]+/);
+    eConfig = eConfig.replace(/1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10[a-z 1-9]+5s2 5p6/, '[Xe] ');
+    eConfig = eConfig.slice(0, 5) + f4 + eConfig.slice(5);
   }
   else {
-    eConfig = eConfig.replace('1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 ', '[Rn]');
+    var f5 = eConfig.match(/5f[1-9]+/)
+    eConfig = eConfig.replace(/1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10[a-z 1-9]+6s2 6p6/, '[Rn] ');
+    eConfig = eConfig.slice(0, 5) + f5 + eConfig.slice(5);
   }
 
   return eConfig;
@@ -454,7 +720,7 @@ function getPreviewPanel(z) {
     var size = previewPanelSize;
     var offset = size / 4;
     var element = elements[z-1];
-    var eConfig = calcElectronConf(z);
+    var eConfig = calcElectronConf(z, element.eConf);
 
     var newPos = {x: 0, y: 0};
     newPos.x = previewMouse.x + offset;
@@ -485,7 +751,7 @@ function hidePreviewPanel() {
 }
 
 // Create orbit layer of eletrons
-function getElementModelOrbitLayer(electronNumber, radius, tilt) {
+function getElementModelOrbitLayer(electronNumber, radius, tilt, z) {
     var orbitContainer = new THREE.Object3D();
     orbitContainer.rotation.x = tilt;
 
@@ -521,10 +787,11 @@ function getElementModelOrbitLayer(electronNumber, radius, tilt) {
     orbit.add(electronMesh);
 
     var tween = new TWEEN.Tween(orbit.rotation)
-        .to({z: '+' + Math.PI * 2}, 10000)
+        .to({z: '+' + Math.PI * 8 / radius}, 10000)
         .repeat(Infinity)
         .start();
 
+    orbit.name = 'electron-orbit';
     orbitContainer.add(orbit);
 
     meshArr.push(line);
@@ -537,6 +804,7 @@ function getElementModelOrbitLayer(electronNumber, radius, tilt) {
 function getElementModel(z) {
     var atomicNumber = z; // = Number of protons = Number of electrons
     var atomicWeight = elements[z-1].atomicWeight;
+    var ePerOrbit = elements[z-1].ePerShell;
     var neutronNumber = Math.round(atomicWeight) - atomicNumber;
     var tmp = z;
 
@@ -596,20 +864,19 @@ function getElementModel(z) {
     group.add(mergedProtonMesh);
     group.add(mergedNeutronMesh);
     group.add(outerMesh);
-        // Get electron layer
-        // Cứ cho chạy loop, tính số electron ở từng lớp rồi gọi hàm
+
     var eGroup = new THREE.Group();
-    for (i = 0; i <= orbit.length; i++) {
-      tmp -= orbitNum[i];
-      if (tmp <= 0){
-        var temp = tmp + orbitNum[i];
-        eGroup.add(getElementModelOrbitLayer(temp, radius + 5*(i+1), 0));
-        break;
-      }
-      else {
-        eGroup.add(getElementModelOrbitLayer(orbitNum[i], radius + 5*(i+1), 0));
-      }
+    eGroup.name = 'Electron group';
+    for (var i = 0; i < ePerOrbit.length; i++){
+        // var elementOrbit = getElementModelOrbitLayer(ePerOrbit[i], radius + 5 * (i + 1), 0, z);
+        // var tween = new TWEEN.Tween(elementOrbit.children[0].rotation)
+        //     .to({z: '+' +  Math.PI * 8 / i}, 10000)
+        //     .repeat(Infinity)
+        //     .start();
+        eGroup.add(getElementModelOrbitLayer(ePerOrbit[i], radius + 5 * (i + 1), 0, z));
     }
+
+
     group.add(eGroup);
 
     meshArr.push(mergedProtonMesh);
@@ -618,16 +885,34 @@ function getElementModel(z) {
 
     group.name = "Element Model";
     elementScene.add(group);
+
+    // var eGroup = elementScene.getObjectByName('Electron group');
+
+
+    console.log('Done creating');
 }
 
 function destroyElementModel() {
-    elementScene.remove(elementScene.getObjectByName('Element Model'));
+    var elementModel = elementScene.getObjectByName('Element Model');
+    var eGroup = elementScene.getObjectByName('Electron group');
+
+    for (var i=0; i < eGroup.children.length; i++) {
+        elementScene.remove(eGroup.children[i]);
+    }
+
+    for (var i=0; i < elementModel.children.length; i++) {
+        elementScene.remove(elementModel.children[i]);
+    }
+    elementScene.remove(elementModel);
 
     for (var i = 0; i < meshArr.length; i++) {
         meshArr[i].geometry.dispose();
         meshArr[i].material.dispose();
     }
+
+    meshArr = [];
 }
+
 
 function animate() {
     requestAnimationFrame(animate);
@@ -650,7 +935,7 @@ function render() {
                 INTERSECTED = intersects[0].object;
                 INTERSECTED.children[0].material.opacity = 1;
                 document.body.style.cursor = "pointer";
-                getPreviewPanel(INTERSECTED.material.name);
+                getPreviewPanel(INTERSECTED.name.slice(3));
             }
         } else {
             if (INTERSECTED) {
@@ -663,7 +948,7 @@ function render() {
         }
     }
 
-    stats.update();
+    // stats.update();
     currentControls.update();
     TWEEN.update();
     currentRenderer.render(currentScene, currentCamera);
