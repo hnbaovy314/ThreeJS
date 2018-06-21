@@ -156,18 +156,20 @@ var unit2 = {
             ],
             steps: [
                 {
-                    action: "pick-up",
-                    target: 2,
+                    action: "light-burner",
+                    target: 3,
                     guideText: [
-                        "123",
-                        "Mashiro best girl!"
+                        "Click at the burner to light it up"
                     ]
                 },
                 {
-                    action: "pour",
+                    action: "reaction",
                     target: 1,
+                    reaction: {
+                        type: "evaporate"
+                    },
                     guideText: [
-                        "456",
+                        "789",
                         "Mashiro best girl!"
                     ]
                 }

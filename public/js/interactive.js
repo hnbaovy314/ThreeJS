@@ -376,6 +376,57 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                         
                         break;
                     }
+                    case "light-burner": {
+                        mouseClickLock = true;
+                        var object = scope.INTERSECTED;
+                        var hand = scope.labScene.camera.children[1];
+                        var anim = scope.labScene.getAnimation("flame");
+
+                        var height = (object.boundingBox.max.y - object.boundingBox.min.y) * object.scaleMultiplier;
+                        var width = (object.boundingBox.max.z - object.boundingBox.min.z) * object.scaleMultiplier;
+
+                        var oldPos = {
+                            x: hand.position.x,
+                            y: hand.position.y,
+                            z: hand.position.z
+                        };
+
+                        THREE.SceneUtils.detach(hand, scope.labScene.camera, scope.labScene.scene);
+
+                        var objPos = {
+                            x: scope.INTERSECTED.position.x,
+                            y: scope.INTERSECTED.position.y,
+                            z: scope.INTERSECTED.position.z
+                        }
+                        new TWEEN.Tween(hand.position)
+                        .to({x: objPos.x, y: objPos.y, z: objPos.z}, 400)
+                        .easing(TWEEN.Easing.Quadratic.InOut)
+                        .onComplete(function() {
+                            THREE.SceneUtils.attach(hand, scope.labScene.scene, scope.labScene.camera);
+
+                            scope.labScene.add(anim);
+                            anim.scale.set(width, width, width);
+                            anim.boundingBox = new THREE.Box3().setFromObject(anim);
+                            anim.position.set(
+                                object.position.x,
+                                object.position.y + height / 2 + (anim.boundingBox.max.y - anim.boundingBox.min.y) / 6,
+                                object.position.z
+                            );
+                            scope.labScene.enabledAnims.push(anim.data);
+
+                            new TWEEN.Tween(hand.position)
+                            .to({x: oldPos.x, y: oldPos.y, z: oldPos.z}, 400)
+                            .easing(TWEEN.Easing.Quadratic.InOut)
+                            .onComplete(function() {
+                                mouseClickLock = false;
+                                nextInteractiveStep();
+                            })
+                            .start();
+                        })
+                        .start();
+
+                        break;
+                    }
                     default: break;
                 }
             }

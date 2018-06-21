@@ -12,6 +12,8 @@ LabScene = function(gui, camera, scene) {
 
     this.labwares = new Labwares(this, gui);
 
+    this.enabledAnims = [];
+
     this.add = function(mesh) {
         scope.scene.add(mesh);
     }
@@ -24,10 +26,18 @@ LabScene = function(gui, camera, scene) {
         return scope.scene.getObjectByName(name);
     }
 
+    this.getAnimation = function(name) {
+        var anim = anims[name].clone();
+        anim.data = anims[name].data;
+
+        return anim;
+    }
+
     this.addLabware = function(labwares) {
         var separation = 5;
         var totalWidth = separation * (labwares.length - 1);
         var containers = [];
+        var repos = false;
         for (var i = 0; i < labwares.length; i++) {     
             var container = scope.labwares.getLabware(labwares[i]);
             containers.push(container);
@@ -42,9 +52,9 @@ LabScene = function(gui, camera, scene) {
             container.position.z += totalWidth / 2 - (separation * i);
 
             // Add preview info
+            container.contentId = labwares[i].id;
             if (container.enableInfo) {
                 container.name = "container-" + i;
-                container.contentId = labwares[i].id;
                 scope.previewInfo[container.name] = {
                     name: labwares[i].chemical + " (" + labwares[i].formula + ")",
                     desc: "A " + labwares[i].name + " that contains " + labwares[i].form + " " + labwares[i].chemical
@@ -53,12 +63,12 @@ LabScene = function(gui, camera, scene) {
 
             scope.scene.add(container);
             scope.raycastTarget.push(container);
-            var helper = new THREE.Box3Helper(new THREE.Box3().setFromObject(container), 0x000000);
-            scope.scene.add(helper);
         }
 
+        var minZ = 50, maxZ = -50;
         for (var i = 0; i < labwares.length; i++) {
             if (labwares[i].with) {
+                repos = true;
                 var parentObject = containers[labwares[i].id - 1];
                 
                 switch (labwares[i].name) {
@@ -150,6 +160,18 @@ LabScene = function(gui, camera, scene) {
                     }
                 }
             }
+
+            var boundingBox = new THREE.Box3().setFromObject(containers[labwares[i].id - 1]);
+            if (boundingBox.max.z > maxZ) {
+                maxZ = boundingBox.max.z;
+            }
+            if (boundingBox.min.z < minZ) {
+                minZ = boundingBox.min.z;
+            }
+        }
+
+        if (repos) {
+            repositionLabwares(width, containers);
         }
     }
 
@@ -180,6 +202,33 @@ LabScene = function(gui, camera, scene) {
 
         if (object.name && scope.previewInfo[object.name]) {
             delete scope.previewInfo[object.name];
+        }
+    }
+
+    this.update = function() {
+        for (var i = 0; i < scope.enabledAnims.length; i++) {
+            if (animReady) {
+                animReady = false;
+                anim = scope.enabledAnims[i];
+                
+                var img = new Image();
+                img.onload = function() {
+                    anim.ctx.clearRect(0, 0, anim.canvas.width, anim.canvas.height);
+                    anim.ctx.drawImage(img, 0, 0);
+                    anim.texture.needsUpdate = true;
+                }
+                img.src = anim.src + anim.frame + anim.format;
+                anim.frame++;
+
+                if (anim.frame > anim.maxFrame) {
+                    anim.frame = 1;
+                }
+
+                setTimeout(function() {
+                    img = null;
+                    animReady = true;
+                }, 50);
+            }
         }
     }
 
@@ -577,6 +626,7 @@ LabScene = function(gui, camera, scene) {
 
         // Load labware models
         scope.labwares.init();
+        loadAnimations();
     }
 
     // Internals
@@ -590,7 +640,53 @@ LabScene = function(gui, camera, scene) {
 
     var miscMesh = [];
 
-    function recalculateCenter(containers) {
+    var anims = {}, animReady = true;
 
+    function repositionLabwares(width, containers) {
+        for (var i = 0; i < containers.length; i++) {
+            containers[i].position.z -= width / 2;
+        }
+
+        for (var i = 0; i < miscMesh.length; i++) {
+            miscMesh[i].position.z -= width / 2;
+        }
+    }
+
+    function loadAnimations() {
+        // Flame animation
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+
+        canvas.width = 528;
+        canvas.height = 528;
+
+        var texture = new THREE.Texture(canvas);
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        var material = new THREE.MeshBasicMaterial({
+            map: texture,
+            overdraw: 0.5,
+            side: THREE.DoubleSide,
+            transparent: true
+        });
+
+        var anim = new THREE.Mesh(
+            new THREE.PlaneGeometry(1, 1), 
+            material
+        );
+
+        var data = {
+            src: "/anim/flame/",
+            canvas: canvas,
+            ctx: ctx,
+            texture: texture,
+            frame: 1,
+            maxFrame: 6,
+            format: '.png'
+        }
+        anim.rotation.y = Math.PI / 2;
+
+        anim.data = data;
+        anims["flame"] = anim;
     }
 }

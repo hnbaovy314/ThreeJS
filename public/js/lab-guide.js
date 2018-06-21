@@ -162,6 +162,7 @@ LabGuide = function(gui, controls, labScene) {
     }
 
     this.update = function() {
+        scope.labScene.update();
         scope.raycaster.update();
         scope.unitLoop.update();
     }

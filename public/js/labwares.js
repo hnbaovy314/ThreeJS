@@ -606,5 +606,5 @@ Labwares = function(labScene, gui) {
             }
             default: break;
         }
-    } 
+    }
 }
