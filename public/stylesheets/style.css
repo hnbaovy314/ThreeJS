@@ -210,6 +210,8 @@ h1, h2 {
 
 #left-sub-info .svg-image {
     margin-top: 5px;
+    width: 100%;
+    height: auto;
 }
 
 #left-sub-info #CT-switch-btn {
