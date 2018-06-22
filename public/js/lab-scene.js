@@ -12,8 +12,6 @@ LabScene = function(gui, camera, scene) {
 
     this.labwares = new Labwares(this, gui);
 
-    this.enabledAnims = [];
-
     this.add = function(mesh) {
         scope.scene.add(mesh);
     }
@@ -26,9 +24,106 @@ LabScene = function(gui, camera, scene) {
         return scope.scene.getObjectByName(name);
     }
 
-    this.getAnimation = function(name) {
+    this.getParticleSystem = function(name, fill) {
+        var boundingBox = fill.boundingBox;
+        var center = boundingBox.getCenter();
+
+        var scale = 1;
+        switch (fill.name) {
+            case 'retort': {
+                scale = 0.7;
+
+                break;
+            }
+            default: break;
+        }
+
+        var maxX = (boundingBox.max.x - center.x) * scale;
+        var minX = (boundingBox.min.x - center.x) * scale;
+        var maxY = (boundingBox.max.y - center.y) * scale * 1.5;
+        var minY = (boundingBox.min.y - center.y) * scale * 2;
+        var maxZ = (boundingBox.max.z - center.z) * scale;
+        var minZ = (boundingBox.min.z - center.z) * scale;
+        
+        switch (name) {
+            case 'bubble': {
+                new THREE.TextureLoader()
+                .load("/textures/chemical/bubble.png", function(texture) {
+                    // Test bubble effect (boiling?)
+                    // create the particle variables
+                    var particleCount = 50,
+                    particles = new THREE.Geometry(),
+                    pMaterial = new THREE.PointCloudMaterial({
+                        map: texture,
+                        size: 0.2,
+                        transparent: true
+                    });
+
+                    // now create the individual particles
+                    for (var p = 0; p < particleCount; p++) {
+                        // create a particle with random position
+                        var pX = Math.random() * (maxX - minX) + minX,
+                            pY = Math.random() * (maxY - minY) + minY,
+                            pZ = Math.random() * (maxZ - minZ) + minZ,
+                            particle = new THREE.Vector3(pX, pY, pZ);
+
+                        // create a velocity vector
+                        particle.velocity = new THREE.Vector3(0, 0, 0);
+
+                        // add it to the geometry
+                        particles.vertices.push(particle);
+                    }
+
+                    // create the particle system
+                    var particleSystem = new THREE.PointCloud(
+                        particles,
+                        pMaterial
+                    );
+                    particleSystem.boundingBox = {
+                        max: {
+                            x: maxX,
+                            y: maxY,
+                            z: maxZ
+                        },
+                        min: {
+                            x: minX,
+                            y: minY,
+                            z: minZ
+                        }
+                    };
+                    particleSystem.particleCount = 50;
+                    particleSystem.position.set(
+                        center.x,
+                        center.y + (boundingBox.max.y - boundingBox.min.y) / 2,
+                        center.z);
+
+                    // add it to the scene
+                    scope.scene.add(particleSystem);
+                    particleSystems.push(particleSystem);
+                })
+            
+                break;
+            }
+            default: break;
+        }
+    }
+
+    this.getAnimation = function(object, name) {
         var anim = anims[name].clone();
         anim.data = anims[name].data;
+
+        var height = (object.boundingBox.max.y - object.boundingBox.min.y) * object.scaleMultiplier;
+        var width = (object.boundingBox.max.z - object.boundingBox.min.z) * object.scaleMultiplier;
+
+        scope.scene.add(anim);
+        anim.scale.set(width, width, width);
+        anim.boundingBox = new THREE.Box3().setFromObject(anim);
+        anim.position.set(
+            object.position.x,
+            object.position.y + height / 2 + (anim.boundingBox.max.y - anim.boundingBox.min.y) / 6,
+            object.position.z
+        );
+        enabledAnims.push(anim);
 
         return anim;
     }
@@ -206,10 +301,10 @@ LabScene = function(gui, camera, scene) {
     }
 
     this.update = function() {
-        for (var i = 0; i < scope.enabledAnims.length; i++) {
+        for (var i = 0; i < enabledAnims.length; i++) {
             if (animReady) {
                 animReady = false;
-                anim = scope.enabledAnims[i];
+                anim = enabledAnims[i].data;
                 
                 var img = new Image();
                 img.onload = function() {
@@ -229,6 +324,32 @@ LabScene = function(gui, camera, scene) {
                     animReady = true;
                 }, 50);
             }
+        }
+
+        if (particleSystems.length > 0) {
+            // Update particle systems
+            var pCount = particleSystems[0].particleCount;
+            while (pCount--) {
+                // get the particle
+                var particle = particleSystems[0].geometry.vertices[pCount];
+
+                // check if we need to reset
+                if (particle.y > particleSystems[0].boundingBox.max.y) {
+                    particle.y = particleSystems[0].boundingBox.min.y;
+                    particle.y = 0;
+                }
+
+                // update the velocity with
+                // a splat of randomniz
+                particle.velocity.y += Math.random() * 0.1;
+
+                // and the position
+                // particle.x += particle.velocity.x;
+                particle.y += 0.01;
+                // particle.z += particle.velocity.z;
+            }
+
+            particleSystems[0].geometry.verticesNeedUpdate = true;
         }
     }
 
@@ -640,7 +761,9 @@ LabScene = function(gui, camera, scene) {
 
     var miscMesh = [];
 
-    var anims = {}, animReady = true;
+    var anims = {}, enabledAnims = [], animReady = true;
+
+    var particleSystems = [];
 
     function repositionLabwares(width, containers) {
         for (var i = 0; i < containers.length; i++) {

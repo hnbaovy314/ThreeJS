@@ -141,12 +141,12 @@ var unit2 = {
                     },
                 {
                     id: 2,
-                    name: "beaker",
+                    name: "test-tube",
                     chemical: "Sulphur",
                     formula: "S",
                     type: "metal",
                     texture: "sulphur.jpg",
-                    form: "solid",
+                    form: "liquid",
                     fillScale: 1/3
                 },
                 {

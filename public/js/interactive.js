@@ -380,10 +380,6 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                         mouseClickLock = true;
                         var object = scope.INTERSECTED;
                         var hand = scope.labScene.camera.children[1];
-                        var anim = scope.labScene.getAnimation("flame");
-
-                        var height = (object.boundingBox.max.y - object.boundingBox.min.y) * object.scaleMultiplier;
-                        var width = (object.boundingBox.max.z - object.boundingBox.min.z) * object.scaleMultiplier;
 
                         var oldPos = {
                             x: hand.position.x,
@@ -404,15 +400,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                         .onComplete(function() {
                             THREE.SceneUtils.attach(hand, scope.labScene.scene, scope.labScene.camera);
 
-                            scope.labScene.add(anim);
-                            anim.scale.set(width, width, width);
-                            anim.boundingBox = new THREE.Box3().setFromObject(anim);
-                            anim.position.set(
-                                object.position.x,
-                                object.position.y + height / 2 + (anim.boundingBox.max.y - anim.boundingBox.min.y) / 6,
-                                object.position.z
-                            );
-                            scope.labScene.enabledAnims.push(anim.data);
+                            scope.labScene.getAnimation(object, "flame");
 
                             new TWEEN.Tween(hand.position)
                             .to({x: oldPos.x, y: oldPos.y, z: oldPos.z}, 400)
@@ -420,6 +408,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                             .onComplete(function() {
                                 mouseClickLock = false;
                                 nextInteractiveStep();
+                                checkForReaction();
                             })
                             .start();
                         })
@@ -496,6 +485,24 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                         default: break;
                     }
                     
+                    break;
+                }
+                case 'evaporate': {
+                    switch (labware.name) {
+                        case 'retort': {
+                            var fill = target.children[2];
+                            fill.boundingBox = new THREE.Box3().setFromObject(fill);
+                            fill.name = labware.name;
+
+                            setTimeout(function() {
+                                scope.labScene.getParticleSystem("bubble", fill);
+                            }, 1000);
+
+                            break;
+                        }
+                        default: break;
+                    }
+
                     break;
                 }
                 default: break;
