@@ -2,22 +2,14 @@ var unit1 = {
     0: { // Step of the unit
         type: 'theory',
         content: {
-            0: [
-                {
-                    type: 'pure-text',
-                    content: 'Welcome to your first lesson. In this lesson, we will learn about bla bla bla...'
-                },
-                {
-                    type: 'option',
-                    content: ['Mashiro is handsome', "Mashiro is beautiful", "Mashiro is gorgeous"]
-                }
-            ],
-            1: [
-                {
-                    type: 'pure-text',
-                    content: "Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!"
-                }
-            ]
+            0:  {
+                type: 'pure-text',
+                content: '<p>Welcome to your first lesson. In this lesson, we will learn about bla bla bla...</p>'
+            },
+            1:  {
+                type: 'pure-text',
+                content: "<p>Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!</p>"
+            }
         }
     },
     1: {
@@ -88,18 +80,14 @@ var unit1 = {
     2: {
         type: 'theory',
         content: {
-            0: [
-                {
-                    type: 'pure-text',
-                    content: 'AAAAAAAAA'
-                }
-            ],
-            1: [
-                {
-                    type: 'pure-text',
-                    content: "HAHAHAHAHAHA"
-                }
-            ]
+            0:  {
+                type: 'pure-text',
+                content: 'Welcome to your first lesson. In this lesson, we will learn about bla bla bla...'
+            },
+            1:  {
+                type: 'pure-text',
+                content: "Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!"
+            }
         }
     },
 }
@@ -107,52 +95,54 @@ var unit2 = {
     0: { // Step of the unit
         type: 'theory',
         content: {
-            0: [
-                {
+            0:  {
                     type: 'pure-text',
                     content: 'Welcome to your first lesson. In this lesson, we will learn about bla bla bla...'
                 },
-                {
-                    type: 'option',
-                    content: ['Mashiro is handsome', "Mashiro is beautiful", "Mashiro is gorgeous"]
-                }
-            ],
-            1: [
-                {
-                    type: 'pure-text',
-                    content: "Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!"
-                }
-            ]
+            1:  {
+                type: 'pure-text',
+                content: "Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!"
+            }
         }
     },
     1: {
         type: 'experiment',
         content: {
+            combine: [1, 2, 3],
+            tube: [1, 2],
+            stand: [1],
+            base: [3],
             labware: [
                 {
                     id: 1,
-                    name: "retort",
-                    chemical: "Mercury",
-                    formula: "Hg",
-                    type: "metal",
-                    texture: "mercury.jpg",
+                    name: "test-tube",
+                    chemical: "Kali Pemanganat",
+                    formula: "K2MnO4",
+                    type: "salt",
+                    texture: "purple.jpg",
                     form: "liquid",
-                    with: [2, 3]
-                    },
+                    corked: true,
+                    placed: "horizontal",
+                    reversed: false,
+                    fillScale: 1/6
+                },
                 {
                     id: 2,
                     name: "test-tube",
-                    chemical: "Sulphur",
-                    formula: "S",
-                    type: "metal",
-                    texture: "sulphur.jpg",
+                    chemical: "Water",
+                    formula: "H2O",
+                    type: "liquid",
+                    texture: "water.jpg",
                     form: "liquid",
-                    fillScale: 1/3
+                    placed: "vertical",
+                    reversed: true,
+                    fillScale: 1/2
                 },
                 {
                     id: 3,
-                    name: "burner"
-                }
+                    name: "burner",
+                    target: 1
+                },
             ],
             steps: [
                 {
@@ -164,7 +154,7 @@ var unit2 = {
                 },
                 {
                     action: "reaction",
-                    target: 1,
+                    target: 2,
                     reaction: {
                         type: "evaporate"
                     },
@@ -179,18 +169,14 @@ var unit2 = {
     2: {
         type: 'theory',
         content: {
-            0: [
-                {
-                    type: 'pure-text',
-                    content: 'AAAAAAAAA'
-                }
-            ],
-            1: [
-                {
-                    type: 'pure-text',
-                    content: "HAHAHAHAHAHA"
-                }
-            ]
+            0:  {
+                type: 'pure-text',
+                content: 'Welcome to your first lesson. In this lesson, we will learn about bla bla bla...'
+            },
+            1:  {
+                type: 'pure-text',
+                content: "Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!"
+            }
         }
     },
 }
@@ -225,6 +211,16 @@ UnitLoop = function(camera, controls, labScene, labGuide) {
 
         currentUnit = unit2;
         startUnit('Unit 2');
+    }
+
+    this.unit3 = function(event) {
+        event.preventDefault();
+
+        scope.labGuide.moveToDesk();
+        scope.labGuide.raycaster.prevPos = "lab-desk";
+
+        currentUnit = unit3;
+        startUnit('Unit 3');
     }
 
     this.init = function() {
@@ -297,20 +293,18 @@ UnitLoop = function(camera, controls, labScene, labGuide) {
                     var content = currentStep.content;
                     for (const page in content) {
                         var pageContent = '';
-                        for (var i = 0; i < content[page].length; i++) {
-                            switch(content[page][i].type) {
-                                case 'pure-text': {
-                                    pageContent += '<p>' + content[page][i].content + '</p>';
+                        switch(content[page].type) {
+                            case 'pure-text': {
+                                pageContent = content[page].content;
 
-                                    break;
-                                }
-                                case 'option': {
-                                    pageContent += '<p>Hahaha</p>';
-
-                                    break;
-                                }
-                                default: break;
+                                break;
                             }
+                            case 'option': {
+                                pageContent += '<p>Hahaha</p>';
+
+                                break;
+                            }
+                            default: break;
                         }
 
                         stepTextContent.push(pageContent);
@@ -327,7 +321,7 @@ UnitLoop = function(camera, controls, labScene, labGuide) {
                     break;
                 }
                 case 'experiment': {
-                    scope.labScene.addLabware(currentStep.content.labware);
+                    scope.labScene.addLabware(currentStep.content);
                     scope.labGuide.raycaster.enableInteractingWithLabware(currentStep.content);
 
                     needUpdate = false;

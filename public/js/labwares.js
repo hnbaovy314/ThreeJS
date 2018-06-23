@@ -36,6 +36,10 @@ Labwares = function(labScene, gui) {
             // Fill labware
             fillLabware(labware, data);
         }
+
+        if (data.placed == "horizontal") {
+            labware.rotation.x = -Math.PI / 2;
+        }
         
         if (labware) {
             scope.interactingTargets.push(labware);
@@ -97,7 +101,7 @@ Labwares = function(labScene, gui) {
                 if (child instanceof THREE.Mesh) {
                     child.castShadow = true;
                     child.material.transparent = true;
-                    child.material.opacity = 0.7;
+                    child.material.opacity = 0.5;
                 }
             });
 
@@ -145,7 +149,7 @@ Labwares = function(labScene, gui) {
                 if (child instanceof THREE.Mesh) {
                     child.castShadow = true;
                     child.material.transparent = true;
-                    child.material.opacity = 0.7;
+                    child.material.opacity = 0.5;
                 }
             });
 
@@ -183,7 +187,7 @@ Labwares = function(labScene, gui) {
                 if (child instanceof THREE.Mesh) {
                     child.castShadow = true;
                     child.material.transparent = true;
-                    child.material.opacity = 0.7;
+                    child.material.opacity = 0.5;
                 }
             });
 
@@ -252,7 +256,7 @@ Labwares = function(labScene, gui) {
                 if (child instanceof THREE.Mesh) {
                     child.castShadow = true;
                     child.material.transparent = true;
-                    child.material.opacity = 0.7;
+                    child.material.opacity = 0.5;
                 }
             });
 
@@ -448,37 +452,134 @@ Labwares = function(labScene, gui) {
                     case "liquid": {
                         var fillHeight = height * data.fillScale;
 
-                        var mergeGeometry = new THREE.Geometry();
-                        var geometry = new THREE.CylinderGeometry(width / 2.2, width / 2.2, fillHeight, 32, 32);
-                        mergeGeometry.merge(geometry);
-                        geometry = new THREE.SphereGeometry(width / 2.2, 32, 32);
-                        geometry.translate(0, -fillHeight / 2, 0);
-                        mergeGeometry.merge(geometry);
+                        if (!data.reversed) {
+                            var mergeGeometry = new THREE.Geometry();
+                            var geometry = new THREE.CylinderGeometry(width / 2.2, width / 2.2, fillHeight, 32, 32);
+                            mergeGeometry.merge(geometry);
+                            geometry = new THREE.SphereGeometry(width / 2.2, 32, 32);
+                            geometry.translate(0, -fillHeight / 2, 0);
+                            mergeGeometry.merge(geometry);
 
-                        var material = new THREE.MeshPhongMaterial();
+                            var material = new THREE.MeshPhongMaterial();
 
-                        var fill = new THREE.Mesh(mergeGeometry, material);
+                            var fill = new THREE.Mesh(mergeGeometry, material);
 
-                        if (data.texture) {
-                            var loader = new THREE.TextureLoader();
-                            loader.load(
-                                'textures/chemical/' + data.texture,
-                                function(texture) {
-                                    material.map = texture;
-                                    material.needsUpdate = true;
-                                }
-                            );   
+                            if (data.texture) {
+                                var loader = new THREE.TextureLoader();
+                                loader.load(
+                                    'textures/chemical/' + data.texture,
+                                    function(texture) {
+                                        material.map = texture;
+                                        material.needsUpdate = true;
+                                    }
+                                );   
+                            } else {
+                                material.color = new THREE.Color(data.color);
+                                material.needsUpdate = true;
+                            }
+
+                            fill.position.set(0, 0 - height / 2 + width / 2.2 + fillHeight / 2, 0);
+                            labware.add(fill);
                         } else {
-                            material.color = new THREE.Color(data.color);
-                            material.needsUpdate = true;
+                            labware.rotation.x = Math.PI;
+
+                            // Create a tray
+                            var mergedGeometry = new THREE.Geometry();
+                            var geometry = new THREE.PlaneGeometry(width * 4, depth * 4);
+                            geometry.rotateX(-Math.PI / 2);
+                            geometry.translate(0, height / 4, 0);
+                            mergedGeometry.merge(geometry);
+                            geometry = new THREE.PlaneGeometry(width * 4, height / 2);
+                            geometry.translate(0, 0, -depth * 2);
+                            mergedGeometry.merge(geometry);
+                            geometry.translate(0, 0, depth * 4);
+                            mergedGeometry.merge(geometry);
+                            geometry.translate(0, 0, -depth * 2);    
+                            geometry.rotateY(Math.PI / 2);
+                            geometry.translate(-width * 2, 0, 0);
+                            mergedGeometry.merge(geometry);
+                            geometry.translate(width * 4, 0, 0);
+                            mergedGeometry.merge(geometry);                      
+
+                            var tray = new THREE.Mesh(
+                                mergedGeometry,
+                                new THREE.MeshPhongMaterial({
+                                    side: THREE.DoubleSide,
+                                    transparent: true,
+                                    opacity: 0.7
+                                })
+                            )
+
+                            labware.add(tray);
+                            tray.position.y += height / 3;
+                            labware.children[0].position.y -= height / 12;
+
+                            // Fill
+                            mergedGeometry = new THREE.Geometry();
+                            geometry = new THREE.PlaneGeometry(width * 4 * 0.95, depth * 4 * 0.95);
+                            geometry.rotateX(-Math.PI / 2);
+                            geometry.translate(0, height / 6, 0);
+                            mergedGeometry.merge(geometry);
+                            geometry.translate(0, -height / 3, 0);
+                            mergedGeometry.merge(geometry);
+                            geometry = new THREE.PlaneGeometry(width * 4 * 0.95, height / 3);
+                            geometry.translate(0, 0, -depth * 2 * 0.95);
+                            mergedGeometry.merge(geometry);
+                            geometry.translate(0, 0, depth * 4 * 0.95);
+                            mergedGeometry.merge(geometry);
+                            geometry.translate(0, 0, -depth * 2 * 0.95);    
+                            geometry.rotateY(Math.PI / 2);
+                            geometry.translate(-width * 2 * 0.95, 0, 0);
+                            mergedGeometry.merge(geometry);
+                            geometry.translate(width * 4 * 0.95, 0, 0);
+                            mergedGeometry.merge(geometry);        
+                            geometry = new THREE.CylinderGeometry((width / 2) * 0.9, (width / 2) * 0.9, height / 3, 32, 32);
+                            geometry.translate(0, -height / 6, 0);
+                            mergedGeometry.merge(geometry);
+
+                            var material = new THREE.MeshPhongMaterial({
+                                side: THREE.DoubleSide,
+                                transparent: true,
+                                opacity: 0.7
+                            });
+                            if (data.texture) {
+                                var loader = new THREE.TextureLoader();
+                                loader.load(
+                                    'textures/chemical/' + data.texture,
+                                    function(texture) {
+                                        material.map = texture;
+                                        material.needsUpdate = true;
+                                    }
+                                );   
+                            } else {
+                                material.color = new THREE.Color(data.color);
+                                material.needsUpdate = true;
+                            }
+
+                            var fill = new THREE.Mesh(mergedGeometry, material);
+                            tray.add(fill);
+                            fill.position.y += height / 12 * 0.95;
                         }
 
-                        fill.position.set(0, 0 - height / 2 + width / 2.2 + fillHeight / 2, 0);
-                        labware.add(fill);
+                        if (data.corked) {
+                            var cork = new THREE.Mesh(
+                                new THREE.CylinderGeometry(width / 2 * 0.9, width / 2 * 0.9, height / 6, 32, 32),
+                                new THREE.MeshPhongMaterial({
+                                    color: 0x000000
+                                })
+                            )
+
+                            labware.add(cork);
+                            cork.position.y += height / 2;
+                        }
 
                         break;
                     }
                     case "solid": {
+                        if (data.reversed) {
+                            break;
+                        }
+
                         var fillHeight = height * data.fillScale;
 
                         var mergeGeometry = new THREE.Geometry();

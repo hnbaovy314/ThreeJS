@@ -489,13 +489,26 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                 }
                 case 'evaporate': {
                     switch (labware.name) {
-                        case 'retort': {
-                            var fill = target.children[2];
-                            fill.boundingBox = new THREE.Box3().setFromObject(fill);
-                            fill.name = labware.name;
+                        case 'test-tube': {
+                            var object = target.children[0];
+                            object.container = labware.name;
+                            
+                            if (labware.reversed) {
+                                object.reversed = true;
+                            }
 
                             setTimeout(function() {
-                                scope.labScene.getParticleSystem("bubble", fill);
+                                scope.labScene.getParticleSystem("bubble", object);
+                            }, 1000);
+
+                            break;
+                        }
+                        case 'retort': {
+                            var object = target.children[2];
+                            object.container = labware.name;
+
+                            setTimeout(function() {
+                                scope.labScene.getParticleSystem("bubble", object);
                             }, 1000);
 
                             break;
