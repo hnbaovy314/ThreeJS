@@ -513,7 +513,20 @@ Raycaster = function(gui, controls, labScene, labGuide) {
 
                             break;
                         }
-                        default: break;
+                        default: {
+                            var object = target.children[0];
+                            object.container = labware.name;
+                            
+                            if (labware.reversed) {
+                                object.reversed = true;
+                            }
+
+                            setTimeout(function() {
+                                scope.labScene.getParticleSystem("bubble", object);
+                            }, 1000);
+
+                            break;
+                        };
                     }
 
                     break;

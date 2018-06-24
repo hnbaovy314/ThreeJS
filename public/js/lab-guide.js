@@ -265,8 +265,9 @@ LabGuide = function(gui, controls, labScene) {
     }
 
     function listUnit() {
-        document.getElementById("gtab-content-body").innerHTML = '<ul><li><a id="unit-1" href="javascript:void(0)">Unit 1</a></li><li><a id="unit-2" href="javascript:void(0)">Unit 2</a></li></ul>';
+        document.getElementById("gtab-content-body").innerHTML = '<ul><li><a id="unit-1" href="javascript:void(0)">Unit 1</a></li><li><a id="unit-2" href="javascript:void(0)">Unit 2</a></li><li><a id="unit-3" href="javascript:void(0)">Unit 3</a></li></ul>';
         document.getElementById('unit-1').addEventListener('click', scope.unitLoop.unit1, false);
         document.getElementById('unit-2').addEventListener('click', scope.unitLoop.unit2, false);
+        document.getElementById('unit-3').addEventListener('click', scope.unitLoop.unit3, false);
     }
 }

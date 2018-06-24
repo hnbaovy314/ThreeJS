@@ -120,7 +120,7 @@ var unit2 = {
                     formula: "K2MnO4",
                     type: "salt",
                     texture: "purple.jpg",
-                    form: "liquid",
+                    form: "solid",
                     corked: true,
                     placed: "horizontal",
                     reversed: false,
@@ -132,11 +132,100 @@ var unit2 = {
                     chemical: "Water",
                     formula: "H2O",
                     type: "liquid",
-                    texture: "water.jpg",
+                    texture: "colorless.jpg",
                     form: "liquid",
                     placed: "vertical",
                     reversed: true,
                     fillScale: 1/2
+                },
+                {
+                    id: 3,
+                    name: "burner",
+                    target: 1
+                },
+            ],
+            steps: [
+                {
+                    action: "light-burner",
+                    target: 3,
+                    guideText: [
+                        "Click at the burner to light it up"
+                    ]
+                },
+                {
+                    action: "reaction",
+                    target: 2,
+                    reaction: {
+                        type: "evaporate"
+                    },
+                    guideText: [
+                        "789",
+                        "Mashiro best girl!"
+                    ]
+                }
+            ],
+        },
+    },
+    2: {
+        type: 'theory',
+        content: {
+            0:  {
+                type: 'pure-text',
+                content: 'Welcome to your first lesson. In this lesson, we will learn about bla bla bla...'
+            },
+            1:  {
+                type: 'pure-text',
+                content: "Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!"
+            }
+        }
+    },
+}
+var unit3 = {
+    0: { // Step of the unit
+        type: 'theory',
+        content: {
+            0:  {
+                    type: 'pure-text',
+                    content: 'Welcome to your first lesson. In this lesson, we will learn about bla bla bla...'
+                },
+            1:  {
+                type: 'pure-text',
+                content: "Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!"
+            }
+        }
+    },
+    1: {
+        type: 'experiment',
+        content: {
+            combine: [1, 2, 3],
+            tube: [1, 2],
+            stand: [1],
+            base: [3],
+            labware: [
+                {
+                    id: 1,
+                    name: "test-tube",
+                    chemical: "Kali Pemanganat",
+                    formula: "K2MnO4",
+                    type: "salt",
+                    texture: "purple.jpg",
+                    form: "solid",
+                    corked: true,
+                    placed: "horizontal",
+                    reversed: false,
+                    fillScale: 1/6
+                },
+                {
+                    id: 2,
+                    name: "flask",
+                    chemical: "Water",
+                    formula: "H2O",
+                    type: "liquid",
+                    texture: "colorless.jpg",
+                    form: "liquid",
+                    placed: "vertical",
+                    reversed: false,
+                    fillScale: 1/3
                 },
                 {
                     id: 3,

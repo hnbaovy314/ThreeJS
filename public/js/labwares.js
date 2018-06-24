@@ -560,19 +560,6 @@ Labwares = function(labScene, gui) {
                             tray.add(fill);
                             fill.position.y += height / 12 * 0.95;
                         }
-
-                        if (data.corked) {
-                            var cork = new THREE.Mesh(
-                                new THREE.CylinderGeometry(width / 2 * 0.9, width / 2 * 0.9, height / 6, 32, 32),
-                                new THREE.MeshPhongMaterial({
-                                    color: 0x000000
-                                })
-                            )
-
-                            labware.add(cork);
-                            cork.position.y += height / 2;
-                        }
-
                         break;
                     }
                     case "solid": {
@@ -580,10 +567,16 @@ Labwares = function(labScene, gui) {
                             break;
                         }
 
-                        var fillHeight = height * data.fillScale;
+                        // var fillHeight = height * data.fillScale;
+                        var fillHeight = height * 1 / 6;
 
                         var mergeGeometry = new THREE.Geometry();
-                        var geometry = new THREE.ConeGeometry(width / 2.2, fillHeight, 32, 32);
+                        var geometry = new THREE.ConeGeometry(width / 2.2, fillHeight * 3 / 4, 32, 32);
+                        geometry.translate(0, fillHeight / 2 * 0.95, 0);
+                        geometry.rotateX(-0.5);
+                        mergeGeometry.merge(geometry);
+                        geometry = new THREE.CylinderGeometry(width / 2.2, width / 2.2, fillHeight * 2 / 3, 32, 32);
+                        geometry.translate(0, -fillHeight / 8, 0);
                         mergeGeometry.merge(geometry);
                         geometry = new THREE.SphereGeometry(width / 2.2, 32, 32);
                         geometry.translate(0, -fillHeight / 2, 0);
@@ -604,6 +597,80 @@ Labwares = function(labScene, gui) {
 
                         fill.position.set(0, 0 - height / 2 + width / 2.2 + fillHeight / 2, 0);
                         labware.add(fill);
+
+                        break;
+                    }
+                    default: break;
+                }
+
+                if (data.corked) {
+                    var cork = new THREE.Mesh(
+                        new THREE.CylinderGeometry(width / 2 * 0.9, width / 2 * 0.9, height / 6, 32, 32),
+                        new THREE.MeshPhongMaterial({
+                            color: 0x000000
+                        })
+                    )
+
+                    labware.add(cork);
+                    cork.position.y += height / 2;
+                }
+
+                break;
+            }
+            case 'flask': {
+                switch (data.form) {
+                    case "liquid": {
+                        var fillHeight = height * data.fillScale;
+                        var geometry = new THREE.CylinderBufferGeometry((width / 2.1) * (data.fillScale * 2), width / 2.1, fillHeight, 32, 32);
+                        var material = new THREE.MeshPhongMaterial({
+                            transparent: true,
+                            opacity: 0.5
+                        });
+                        var fill = new THREE.Mesh(geometry, material);
+
+                        if (data.texture) {
+                            var loader = new THREE.TextureLoader();
+                            loader.load(
+                                'textures/chemical/' + data.texture,
+                                function(texture) {
+                                    material.map = texture;
+                                    material.needsUpdate = true;
+                                }
+                            );   
+                        } else {
+                            material.color =  new THREE.Color(data.color);
+                            material.needsUpdate = true;
+                        }
+
+                        labware.add(fill);
+                        fill.position.y -= height / 2 - fillHeight / 2 - 0.15;
+
+                        break;
+                    }
+                    case "solid": {
+                        var fillHeight = height * data.fillScale;
+                        var mergedGeometry = new THREE.Geometry();
+                        var geometry = new THREE.CylinderGeometry((width / 2.1) * (data.fillScale * 2), width / 2.1, fillHeight, 32, 32, true);
+                        mergedGeometry.merge(geometry);
+                        geometry = new THREE.ConeGeometry((width / 2.1) * (data.fillScale * 2), fillHeight / 4, 32, 32, true);
+                        geometry.translate(0, fillHeight * 5 / 8, 0);
+                        mergedGeometry.merge(geometry);
+
+
+                        var material = new THREE.MeshPhongMaterial();
+                        var fill = new THREE.Mesh(mergedGeometry, material);
+
+                        var loader = new THREE.TextureLoader();
+                        loader.load(
+                            'textures/chemical/' + data.texture,
+                            function(texture) {
+                                material.map = texture;
+                                material.needsUpdate = true;
+                            }
+                        );
+
+                        labware.add(fill);
+                        fill.position.y -= height / 2 - fillHeight / 2 - 0.15;
 
                         break;
                     }
@@ -658,7 +725,10 @@ Labwares = function(labScene, gui) {
                     case "liquid": {
                         var fillHeight = height * data.fillScale;
                         var geometry = new THREE.CylinderBufferGeometry(width / 2.1, width / 2.1, fillHeight, 32, 32);
-                        var material = new THREE.MeshPhongMaterial();
+                        var material = new THREE.MeshPhongMaterial({
+                            transparent: true,
+                            opacity: 0.5
+                        });
                         var fill = new THREE.Mesh(geometry, material);
 
                         if (data.texture) {
@@ -682,9 +752,16 @@ Labwares = function(labScene, gui) {
                     }
                     case "solid": {
                         var fillHeight = height * data.fillScale;
-                        var geometry = new THREE.ConeBufferGeometry(width / 2.1, fillHeight, 32, 32);
+                        var mergedGeometry = new THREE.Geometry();
+                        var geometry = new THREE.CylinderGeometry(width / 2.1, width / 2.1, fillHeight / 2, 32, 32, true);
+                        mergedGeometry.merge(geometry);
+                        geometry = new THREE.ConeGeometry(width / 2.1, fillHeight / 2, 32, 32, true);
+                        geometry.translate(0, fillHeight / 2, 0);
+                        mergedGeometry.merge(geometry);
+
+
                         var material = new THREE.MeshPhongMaterial();
-                        var fill = new THREE.Mesh(geometry, material);
+                        var fill = new THREE.Mesh(mergedGeometry, material);
 
                         var loader = new THREE.TextureLoader();
                         loader.load(
@@ -695,7 +772,7 @@ Labwares = function(labScene, gui) {
                             }
                         );
 
-                        fill.position.set(0, 0 - height / 2 + fillHeight / 2 + 0.15, 0 - width / 9);
+                        fill.position.set(0, 0 - height / 2 + fillHeight / 2, 0 - width / 9);
                         labware.add(fill);
 
                         break;

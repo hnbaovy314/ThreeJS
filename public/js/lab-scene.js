@@ -31,7 +31,12 @@ LabScene = function(gui, camera, scene) {
         var scale = 1;
         switch (object.container) {
             case 'test-tube': {
-                scale = 0.6;
+                scale = 0.7;
+
+                break;
+            }
+            case 'flask': {
+                scale = 0.5;
 
                 break;
             }
@@ -60,7 +65,7 @@ LabScene = function(gui, camera, scene) {
                     particles = new THREE.Geometry(),
                     pMaterial = new THREE.PointCloudMaterial({
                         map: texture,
-                        size: 0.2 * scale,
+                        size: (boundingBox.max.x - boundingBox.min.x) * 0.25 * scale,
                         transparent: true,
                         // depthWrite: false
                     });
@@ -244,6 +249,10 @@ LabScene = function(gui, camera, scene) {
             }
         }
 
+        // Titillation tube
+        // Temporarily fixed format: 2 objects only
+        // First object is a horizontal placed tube
+        // Second object maybe a normally or reversedly placed tube/flask/beaker...
         if (content.tube) {
             var firstObj = containers[content.tube[0] - 1];
             var secondObj = containers[content.tube[1] - 1];
@@ -252,29 +261,46 @@ LabScene = function(gui, camera, scene) {
             var firstCenter = firstBoundingBox.getCenter();
             var secondBoundingBox = new THREE.Box3().setFromObject(secondObj);
             var secondCenter = secondBoundingBox.getCenter();
-
-            var curve = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(
-                    firstCenter.x,
-                    firstCenter.y,
-                    firstBoundingBox.min.z + (firstBoundingBox.max.z - firstBoundingBox.min.z) / 5),
-                new THREE.Vector3(
-                    firstCenter.x,
-                    firstCenter.y - 0.2,
-                    secondBoundingBox.max.z - (secondBoundingBox.max.z - secondBoundingBox.min.z) / 12 + 0.2),
-                new THREE.Vector3(
-                    secondCenter.x,
-                    secondBoundingBox.min.y + (secondBoundingBox.max.y - secondBoundingBox.min.y) / 12,
-                    secondBoundingBox.max.z - (secondBoundingBox.max.z - secondBoundingBox.min.z) / 6 - 0.2),
-                new THREE.Vector3(
-                    secondCenter.x,
-                    secondBoundingBox.min.y + (secondBoundingBox.max.y - secondBoundingBox.min.y) / 12,
-                    secondCenter.z + 0.2),
-                new THREE.Vector3(
-                    secondCenter.x,
-                    secondCenter.y,
-                    secondCenter.z)
-            ]);
+            
+            if (labwares[content.tube[1] - 1].reversed) {
+                var curve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(
+                        firstCenter.x,
+                        firstCenter.y,
+                        firstBoundingBox.min.z + (firstBoundingBox.max.z - firstBoundingBox.min.z) / 5),
+                    new THREE.Vector3(
+                        firstCenter.x,
+                        firstCenter.y - 0.2,
+                        secondBoundingBox.max.z - (secondBoundingBox.max.z - secondBoundingBox.min.z) / 12 + 0.2),
+                    new THREE.Vector3(
+                        secondCenter.x,
+                        secondBoundingBox.min.y + (secondBoundingBox.max.y - secondBoundingBox.min.y) / 12,
+                        secondBoundingBox.max.z - (secondBoundingBox.max.z - secondBoundingBox.min.z) / 6 - 0.2),
+                    new THREE.Vector3(
+                        secondCenter.x,
+                        secondBoundingBox.min.y + (secondBoundingBox.max.y - secondBoundingBox.min.y) / 12,
+                        secondCenter.z + 0.2),
+                    new THREE.Vector3(
+                        secondCenter.x,
+                        secondCenter.y,
+                        secondCenter.z)
+                ]);
+            } else {
+                var curve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(
+                        firstCenter.x,
+                        firstCenter.y,
+                        firstBoundingBox.min.z + (firstBoundingBox.max.z - firstBoundingBox.min.z) / 5),
+                    new THREE.Vector3(
+                        firstCenter.x,
+                        firstCenter.y - 0.3,
+                        secondCenter.z + 0.3),
+                    new THREE.Vector3(
+                        secondCenter.x,
+                        secondBoundingBox.min.y + (secondBoundingBox.max.y - secondBoundingBox.min.y) / 12,
+                        secondCenter.z)
+                ]);
+            }
 
             var geometry = new THREE.TubeGeometry(curve, 100, 0.1, 20, false);
             var material = new THREE.MeshPhongMaterial({
@@ -324,6 +350,16 @@ LabScene = function(gui, camera, scene) {
             scope.destroy(miscMesh[i]);
         }
         miscMesh = [];
+
+        for (var i = enabledAnims.length - 1; i >= 0; i--) {
+            scope.destroy(enabledAnims[i]);
+        }
+        enabledAnims = [];
+
+        for (var i = particleSystems.length - 1; i >= 0; i--) {
+            scope.destroy(particleSystems[i]);
+        }
+        particleSystems = [];
 
         var wall = scope.scene.getObjectByName("block-wall");
         if (wall) {
