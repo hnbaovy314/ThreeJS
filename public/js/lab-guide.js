@@ -122,7 +122,7 @@ LabGuide = function(gui, controls, labScene) {
         scope.raycaster.init();
         scope.unitLoop = new UnitLoop(scope.labScene.camera, scope.controls, scope.labScene, scope);
         scope.unitLoop.init();
-        
+
         getMainMenu('lessons');
     }
 
@@ -151,10 +151,10 @@ LabGuide = function(gui, controls, labScene) {
     this.resetToEmptyHand = function() {
         var hand = scope.labScene.camera.children[1];
         var handAttachment = hand.children[1];
-        
+
         hand.rotation.set(-1.25, -0.5, 0);
         hand.position.set(2.75, -3, -4.5);
-    
+
         if (handAttachment) {
             hand.remove(handAttachment);
             scope.labScene.destroy(handAttachment);
@@ -165,6 +165,7 @@ LabGuide = function(gui, controls, labScene) {
         scope.labScene.update();
         scope.raycaster.update();
         scope.unitLoop.update();
+        controls.update();
     }
 
     // Move to experiment desk position
