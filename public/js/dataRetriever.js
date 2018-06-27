@@ -1,7 +1,6 @@
 //getting information from db - calling server side function by create fake call
-
 DataRetriever = function() {
-    this.getAllElements() {
+    this.getAllElements = function() {
         var result = [];
         $.ajax({
           url: '/getE',
@@ -15,7 +14,7 @@ DataRetriever = function() {
         return result;
     }
 
-    this.getElementGroup(property) {
+    this.getElementGroup = function(property) {
         var result = [];
         $.ajax({
           url: '/getP',
@@ -30,7 +29,7 @@ DataRetriever = function() {
         return result;
     }
 
-    this.getElementCrystalStructure() {
+    this.getElementCrystalStructure = function() {
         var result = [];
         $.ajax({
             url: '/getCTs',
@@ -43,7 +42,7 @@ DataRetriever = function() {
         return result;
     }
 
-    this.getECTName(ctId) {
+    this.getECTName = function(ctId) {
         var result = {};
         $.ajax({
             url: '/getCT',
@@ -57,5 +56,17 @@ DataRetriever = function() {
         return result;
     }
 
-
+    this.getCatName = function(catId) {
+        var result = {};
+        $.ajax({
+            url: '/getCN',
+            type: 'GET',
+            data: {'id': catId},
+            async: false,
+            success: function(data) {
+                result = data;
+            }
+        });
+        return result;
+    }
 }
