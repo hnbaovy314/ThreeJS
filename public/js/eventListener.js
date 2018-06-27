@@ -1,8 +1,16 @@
-PtEventListener = function(DataRetriever, ElementTools) {
+PtEventListener = function() {
+    const dataRetriever = new DataRetriever();
+    const elementTools = new ElementTools();
+
+    this.infoTabClick = function(tabId) {
+        $('.infoBtn-focus').removeClass('infoBtn-focus');
+        $(`#${tabId}`).addClass('infoBtn-focus');
+    }
+
     this.onElementImg = function(atomicNumber, divId) {
         var subInfoDiv = document.getElementById(divId);
         subInfoDiv.innerHTML = '';
-        ElementTools.getElementImg('left-sub-info', atomicNumber);
+        elementTools.getElementImg('left-sub-info', atomicNumber);
     }
 
     this.onCrystalStructure = function(crystalStructure, divId) {
@@ -50,7 +58,7 @@ PtEventListener = function(DataRetriever, ElementTools) {
         subInfoDiv.appendChild(svgWrapper);
     }
 
-    this.onCategories = function(catId, divId) {
+    this.onCategories = function(category, divId) {
         var subInfoDiv = document.getElementById(divId);
         subInfoDiv.innerHTML = '';
 
@@ -58,7 +66,6 @@ PtEventListener = function(DataRetriever, ElementTools) {
         textWrapper.setAttribute('id', 'element-info-categories');
         textWrapper.setAttribute('class', 'text-wrapper');
 
-        var category = DataRetriever.getCat(catId);
         textWrapper.innerHTML = `
             <h3>${category.name} (${category.nameEn})</h3>
             <p>${category.description}</p>

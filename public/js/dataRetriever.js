@@ -56,10 +56,24 @@ DataRetriever = function() {
         return result;
     }
 
-    this.getCatName = function(catId) {
+    this.getCN = function(catId) {
         var result = {};
         $.ajax({
             url: '/getCN',
+            type: 'GET',
+            data: {'id': catId},
+            async: false,
+            success: function(data) {
+                result = data;
+            }
+        });
+        return result;
+    }
+
+    this.getCat = function(catId) {
+        var result = {};
+        $.ajax({
+            url: '/getCat',
             type: 'GET',
             data: {'id': catId},
             async: false,

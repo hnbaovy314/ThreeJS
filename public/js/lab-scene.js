@@ -1,10 +1,12 @@
-LabScene = function(gui, camera, scene) {
+LabScene = function(gui, camera, scene, renderer) {
 
     this.camera = camera;
 
     this.scene = scene;
 
     this.gui = gui;
+
+    this.renderer = renderer;
 
     this.raycastTarget = [];
 
@@ -436,6 +438,8 @@ LabScene = function(gui, camera, scene) {
 
             particleSystems[0].geometry.verticesNeedUpdate = true;
         }
+
+        scope.renderer.render(scene, camera);
     }
 
     this.init = function() {
@@ -833,6 +837,11 @@ LabScene = function(gui, camera, scene) {
         // Load labware models
         scope.labwares.init();
         loadAnimations();
+
+        // Create Periodic Table
+        var periodicTable = new PeriodicTable(scope.labGuide, scope);
+        periodicTable.init();
+
     }
 
     // Internals

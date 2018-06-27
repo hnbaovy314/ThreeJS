@@ -12,7 +12,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
 
     this.currentPos = ''
     this.prevPos = '';
-    
+
     this.init = function() {
         document.addEventListener('mousemove', onDocumentMouseMove, false);
         document.addEventListener('mousedown', onDocumentMouseDown, false);
@@ -58,7 +58,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                     scope.INTERSECTED.traverse(function(child) {
                         if (labScene.scene.getObjectByName(scope.INTERSECTED.name + "-helper")) {
                             labScene.scene.getObjectByName(scope.INTERSECTED.name + "-helper").material.opacity = 0;
-                        } 
+                        }
 
                         hideInfoPanel();
                     })
@@ -98,17 +98,17 @@ Raycaster = function(gui, controls, labScene, labGuide) {
 
     function onDocumentMouseMove(event) {
         event.preventDefault();
-    
+
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    
+
         infoMouse.x = event.clientX;
         infoMouse.y = event.clientY;
     }
 
     function onDocumentMouseDown(event) {
         event.preventDefault();
-        
+
         if (scope.INTERSECTED && scope.INTERSECTED.name != scope.currentPos) {
             switch(scope.INTERSECTED.name) {
                 case "guide-tab": {
@@ -130,16 +130,22 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                     scope.labGuide.moveToDesk();
                     break;
                 }
+                case "element-table": {
+                    scope.currentPos = "element-table";
+                    hideInfoPanel();
+                    scope.labGuide.moveToPeriodicTable();
+                    break;
+                }
                 default: break;
             }
         }
 
         if (enableInteractingWithLabware && !mouseClickLock) {
-            var labware = interactive.labwares[interactive.steps[interactiveStep].target - 1]; 
+            var labware = interactive.labwares[interactive.steps[interactiveStep].target - 1];
             if (scope.INTERSECTED && scope.INTERSECTED.contentId == labware.id) {
                 switch (interactive.steps[interactiveStep].action) {
                     case 'pick-up': {
-                        mouseClickLock = true;                      
+                        mouseClickLock = true;
                         var object = scope.INTERSECTED;
                         var hand = scope.labScene.camera.children[1];
 
@@ -174,13 +180,13 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                                 case "test-tube": {
                                     object.position.x -= 0.05;
                                     object.position.y += 0.05;
-                                    
+
                                     break;
                                 }
                                 case "beaker": {
                                     object.position.x -= 0.05;
                                     object.position.y += 0.05;
-                                    
+
                                     break;
                                 }
                                 default: break;
@@ -263,10 +269,10 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                     case "clean": {
                         var object = scope.INTERSECTED;
                         object.boundingBox = scope.INTERSECTED.boundingBox;
-                        object.scaleMultiplier = scope.INTERSECTED.scaleMultiplier; 
+                        object.scaleMultiplier = scope.INTERSECTED.scaleMultiplier;
                         object.scale.set(object.scaleMultiplier / 2, object.scaleMultiplier / 2, object.scaleMultiplier / 2);
                         var dustpan = scope.labScene.labwares.getUtils("dustpan");
-                        
+
                         var width = (object.boundingBox.max.x - object.boundingBox.min.x) * object.scaleMultiplier;
                         var height = (object.boundingBox.max.y - object.boundingBox.min.y) * object.scaleMultiplier;
                         var depth = (object.boundingBox.max.z - object.boundingBox.min.z) * object.scaleMultiplier;
@@ -279,7 +285,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                         dustpan.position.set(cleanPos.x, cleanPos.y, cleanPos.z);
                         dustpan.rotation.z += Math.PI * 3 / 4;
                         scope.labScene.add(dustpan);
-                        
+
                         scope.labGuide.resetToEmptyHand();
                         var hand = scope.labScene.camera.children[1];
                         var oldPos = {
@@ -314,7 +320,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                                 new TWEEN.Tween(brush.position)
                                 .to({x: oldX}, 250)
                                 .easing(TWEEN.Easing.Quadratic.InOut)
-                                .onComplete(function() {         
+                                .onComplete(function() {
                                     new TWEEN.Tween(brush.position)
                                     .to({x: newX}, 250)
                                     .easing(TWEEN.Easing.Quadratic.InOut)
@@ -360,7 +366,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
 
                                                     nextInteractiveStep();
                                                 })
-                                                .start(); 
+                                                .start();
                                             })
                                             .start();
                                         })
@@ -373,7 +379,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                             .start();
                         })
                         .start();
-                        
+
                         break;
                     }
                     case "light-burner": {
@@ -439,7 +445,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                 scope.labGuide.createGuideText(guideText);
             }
         }
-        
+
         delay = 0;
     }
 
@@ -450,7 +456,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
 
         var step = interactive.steps[interactiveStep];
         var labware = interactive.labwares[step.target - 1];
-        
+
         if (step.action == "reaction") {
             var target = scope.labScene.labwares.interactingTargets[step.target - 1];
 
@@ -471,7 +477,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                                         map: texture
                                     })
                                 )
-                                
+
                                 target.add(pile);
                                 pile.position.y += h / 2;
                                 pile.position.z += 150;
@@ -484,7 +490,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                         }
                         default: break;
                     }
-                    
+
                     break;
                 }
                 case 'evaporate': {
@@ -492,7 +498,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                         case 'test-tube': {
                             var object = target.children[0];
                             object.container = labware.name;
-                            
+
                             if (labware.reversed) {
                                 object.reversed = true;
                             }
@@ -516,7 +522,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
                         default: {
                             var object = target.children[0];
                             object.container = labware.name;
-                            
+
                             if (labware.reversed) {
                                 object.reversed = true;
                             }
@@ -538,6 +544,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
 
     // Preview Info Panel
     function getInfoPanel() {
+
         if (!scope.labScene.previewInfo[scope.INTERSECTED.name]) {
             return;
         }
@@ -548,11 +555,11 @@ Raycaster = function(gui, controls, labScene, labGuide) {
         var panelHeight = 100;
         var offsetX =  panelWidth / 4;
         var offsetY =  panelHeight / 4;
-    
+
         var newPos = {x: 0, y: 0};
         newPos.x = infoMouse.x + offsetX;
         newPos.y = infoMouse.y + offsetY;
-    
+
         // Check for overflow
         if (newPos.x + panelWidth >= width ) {
             newPos.x = width - panelWidth - 10;

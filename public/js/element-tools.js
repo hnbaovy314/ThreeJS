@@ -1,49 +1,12 @@
-ElementTools = function (PtEventListener, DataRetriever) {
-    this.getElementInfo = function (element, divId, eConf) {
-        var infoText = document.getElementById(divId);
-        var eCT = '';
-        if (element.crystalStructure === Array) {
-            eCT = '<ul>';
-            for (var i=0; i<element.crystalStructure.length; i++) {
-                var eCTValue = DataRetriever.getECTName(element.crystalStructure[i]).name;
-                eCT = eCT.concat(`<li>${eCTValue}</li>`);
-            }
-            eCT = eCT.concat('</ul>');
-        }
-        else {
-            eCT = DataRetriever.getECTName(element.crystalStructure).name;
-        }
-        var author = '';
-        for (var i=0; i < element.discovery.by.length; i++){
-            if (i > 0) {
-                author = author.concat(' và ');
-            }
-            author = author.concat(element.discovery.by[i]);
-        }
-
-        infoText.innerHTML =
-        `<h2>${element.z} - ${element.name}</h2>
-        <ul>
-        <li>Khối lượng nguyên tử: <b>${element.atomicWeight}</b></li>
-        <li>Cấu hình electron: <b>${eConf}</b></li>
-        <li>Phân loại: <a href="" id="cat-link">${element.cat}</a></li>
-        <li>Trạng thái: ${element.phase}</li>
-        <li>Cấu trúc tinh thể: <a href="" id="structure-link">${eCT}</a></li>
-        <li>Phát hiện bởi ${author}, ${element.discovery.year}</li>
-        </ul>`;
-
-        $('#structure-link').on('click', function(){
-            $('.infoBtn-focus').removeClass('infoBtn-focus');
-            $('#infoBtn1').addClass('infoBtn-focus');
-            PtEventListener.onCrystalStructure(element.crystalStructure);
-        });
-    }
+ElementTools = function () {
+    const dataRetriever = new DataRetriever();
 
     this.clearDiv = function(divId) {
         var div = document.getElementById(divId);
         div.innerHTML = '';
     }
 
+    //Load image for each image in detail page
     this.getElementImg = function(divId, atomicNumber) {
         var div = document.getElementById(divId);
         var imgWrapper = document.createElement('div');
@@ -67,95 +30,6 @@ ElementTools = function (PtEventListener, DataRetriever) {
         }
 
         $(window).on("load resize", centerImage);
-    }
-
-    // Get individual element
-    function getElement(size, element) {
-        var group = new THREE.Group();
-
-
-        // Create canvas and write text on it
-        var canvas = document.createElement('canvas');
-        var canvasSize = 256;
-        canvas.width = canvasSize;
-        canvas.height = canvasSize;
-        var ctx = canvas.getContext('2d');
-
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "#2c3e50";
-        // Atomic Number
-        ctx.font = "bold 32pt helvetica";
-        ctx.fillText(element.z, canvasSize / 2, canvasSize / 7);
-        // Symbol
-        ctx.font = "bold 70pt helvetica";
-        ctx.fillText(element.symbol, canvasSize / 2, canvasSize / 2);
-        // Name
-        ctx.font = "bold 28pt helvetica";
-        ctx.fillText(element.name, canvasSize / 2, canvasSize / 1.25);
-        // Atomic Weight
-        ctx.font = "bold 16pt helvetica";
-        ctx.fillText(element.atomicWeight, canvasSize / 2, canvasSize / 1.0875);
-
-        var texture = new THREE.Texture(canvas);
-        texture.needsUpdate = true;
-
-        var planeGeometry = new THREE.PlaneBufferGeometry(size, size, size);
-        var planeMaterial = new THREE.MeshBasicMaterial({
-            map: texture,
-            side: THREE.DoubleSide,
-            transparent: true
-        });
-
-        var boxGeometry = new THREE.BoxBufferGeometry(size, size, size / 2);
-        var boxMaterial = new THREE.MeshBasicMaterial({
-            opacity: 0,
-            transparent: true,
-        });
-        var edges = new THREE.EdgesGeometry(boxGeometry);
-        var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x1A1A1A}));
-        line.material.depthTest = false;
-        line.material.opacity = 0.25;
-        line.material.transparent = true;
-
-        var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-        var box = new THREE.Mesh(boxGeometry, boxMaterial);
-        box.name = `box${element.z}`;
-        plane.name = `plane${element.z}`;
-        box.add(line);
-
-        group.add(plane);
-        group.add(box);
-
-        periodicTable.push(box);
-
-        return group;
-    }
-
-    // Get periodic table grid
-    this.getElementGrid = function(table) {
-        var group = new THREE.Group();
-        var k = 0;
-
-        for (var i = 0; i < table.length; i++) {
-            for (var j = 0; j < table[0].length; j++) {
-                if (table[i][j]) {
-                    var mesh = getElement(elementBoxSize, elements[table[i][j]-1]);
-                    mesh.position.x = j * gridSeparation - (gridSeparation * (table[0].length - 1)) / 2;
-                    mesh.position.y = -(i * gridSeparation + elementBoxSize / 2) + (gridSeparation * (table.length - 1)) / 2;
-                    group.add(mesh);
-                    k += 1;
-                }
-            }
-        }
-
-        group.add(getTableHeader(table[0].length * gridSeparation, gridSeparation * table.length));
-
-        group.position.z = -50;
-
-        tableScene.add(group);
-
-        return group;
     }
 
     this.loadBGM = function(link){
@@ -245,5 +119,5 @@ ElementTools = function (PtEventListener, DataRetriever) {
         return orbitContainer;
     }
 
-    
+
 }
