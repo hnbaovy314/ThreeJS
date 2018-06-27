@@ -204,14 +204,30 @@ h1, h2 {
 }
 
 #left-sub-info .svg-wrapper {
-    width: 95%;
-    height: 95%;
+    width: 85%;
+    height: 85%;
 }
 
 #left-sub-info .svg-image {
     margin-top: 5px;
     width: 100%;
     height: auto;
+}
+
+#left-sub-info .text-wrapper {
+    height: 100%;
+    width: auto;
+    padding: 2px;
+}
+
+#left-sub-info .text-wrapper h3{
+    color: #e74c3c;
+}
+
+#left-sub-info .text-wrapper p{
+    height: 90%;
+    color: #2c3e50;
+    overflow: scroll;
 }
 
 #left-sub-info #CT-switch-btn {

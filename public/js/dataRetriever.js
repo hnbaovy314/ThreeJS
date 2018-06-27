@@ -54,3 +54,31 @@ export function getECTName(ctId) {
     });
     return result;
 }
+
+export function getCat(catId) {
+    var result = {};
+    $.ajax({
+        url: '/getCat',
+        type: 'GET',
+        data: {'id': catId},
+        async: false,
+        success: function(data) {
+            result = data;
+        }
+    });
+    return result;
+}
+
+export function getCatName(catId) {
+    var result = {};
+    $.ajax({
+        url: '/getCN',
+        type: 'GET',
+        data: {'id': catId},
+        async: false,
+        success: function(data) {
+            result = data;
+        }
+    });
+    return result;
+}

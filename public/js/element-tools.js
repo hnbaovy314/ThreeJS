@@ -1,8 +1,11 @@
-import {getECTName} from './dataRetriever.js';
-import {onCrystalStructure} from './eventListener.js';
+import {getECTName, getCatName} from './dataRetriever.js';
+import {onCrystalStructure, onCategories} from './eventListener.js';
 export function getElementInfo(element, divId, eConf) {
     var infoText = document.getElementById(divId);
     var eCT = '';
+    var cat = '';
+    var author = '';
+
     if (element.crystalStructure === Array) {
         eCT = '<ul>';
         for (var i=0; i<element.crystalStructure.length; i++) {
@@ -14,7 +17,13 @@ export function getElementInfo(element, divId, eConf) {
     else {
         eCT = getECTName(element.crystalStructure).name;
     }
-    var author = '';
+
+    if (element.cat == 'unk') {
+        cat = "không xác định";
+    } else {
+        cat = getCatName(element.cat).name;
+    }
+
     for (var i=0; i < element.discovery.by.length; i++){
         if (i > 0) {
             author = author.concat(' và ');
@@ -27,7 +36,7 @@ export function getElementInfo(element, divId, eConf) {
     <ul>
     <li>Khối lượng nguyên tử: <b>${element.atomicWeight}</b></li>
     <li>Cấu hình electron: <b>${eConf}</b></li>
-    <li>Phân loại: <a href="" id="cat-link">${element.cat}</a></li>
+    <li>Phân loại: <a href="" id="cat-link">${cat}</a></li>
     <li>Trạng thái: ${element.phase}</li>
     <li>Cấu trúc tinh thể: <a href="" id="structure-link">${eCT}</a></li>
     <li>Phát hiện bởi ${author}, ${element.discovery.year}</li>
@@ -36,8 +45,13 @@ export function getElementInfo(element, divId, eConf) {
     $('#structure-link').on('click', function(){
         $('.infoBtn-focus').removeClass('infoBtn-focus');
         $('#infoBtn1').addClass('infoBtn-focus');
-        onCrystalStructure(element.crystalStructure);
+        onCrystalStructure(element.crystalStructure, 'left-sub-info');
     });
+    $('#cat-link').on('click', function() {
+        $('.infoBtn-focus').removeClass('infoBtn-focus');
+        $('#infoBtn2').addClass('infoBtn-focus');
+        onCategories(element.cat, 'left-sub-info');
+    })
 }
 
 export function clearDiv(divId) {
@@ -50,6 +64,7 @@ export function getElementImg(divId, atomicNumber) {
     var imgWrapper = document.createElement('div');
     var img = document.createElement('img');
 
+    div.innerHTML = '';
     imgWrapper.setAttribute('id', 'element-info-img');
     imgWrapper.setAttribute('class', 'img-wrapper');
     img.setAttribute('id', 'element-img');

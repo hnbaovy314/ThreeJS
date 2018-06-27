@@ -1,5 +1,5 @@
 import {getElementInfo, clearDiv, getElementImg} from './element-tools.js';
-import {onElementImg, onCrystalStructure} from './eventListener.js'
+import {onElementImg, onCrystalStructure, onCategories} from './eventListener.js'
 import {getAllElements, getElementGroup} from './dataRetriever.js'
 
 var demoData = [
@@ -502,13 +502,20 @@ function onTableBoxClick(event) {
         getElementImg('left-sub-info', atomicNumber);
         $('#infoBtn0').addClass('infoBtn-focus');
         $('#infoBtn0').on('click', function() {
-            onElementImg(atomicNumber);
+            $('.infoBtn-focus').removeClass('infoBtn-focus');
+            $('#infoBtn0').addClass('infoBtn-focus');
+            onElementImg(atomicNumber, 'left-sub-info');
         });
         $('#infoBtn1').on('click', function() {
             $('.infoBtn-focus').removeClass('infoBtn-focus');
             $('#infoBtn1').addClass('infoBtn-focus');
-            onCrystalStructure(element.crystalStructure);
+            onCrystalStructure(element.crystalStructure, 'left-sub-info');
         });
+        $('#infoBtn2').on('click', function() {
+            $('.infoBtn-focus').removeClass('infoBtn-focus');
+            $('#infoBtn2').addClass('infoBtn-focus');
+            onCategories(element.cat, 'left-sub-info');
+        })
         $('#infoBtn3').on('click', function() {
             var wnd = window.open(`https://en.wikipedia.org/wiki/${element.name}`);
         });

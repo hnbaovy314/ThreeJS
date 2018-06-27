@@ -1,16 +1,14 @@
-import {getElementImg} from './element-tools.js'
+import {getElementImg} from './element-tools.js';
+import {getCat} from './dataRetriever.js';
 
-export function onElementImg(atomicNumber) {
-    var subInfoDiv = document.getElementById('left-sub-info');
+export function onElementImg(atomicNumber, divId) {
+    var subInfoDiv = document.getElementById(divId);
     subInfoDiv.innerHTML = '';
-    $('.infoBtn-focus').removeClass('infoBtn-focus');
-    $('.infoBtn0').addClass('infoBtn-focus');
-
     getElementImg('left-sub-info', atomicNumber);
 }
 
-export function onCrystalStructure(crystalStructure) {
-    var subInfoDiv = document.getElementById('left-sub-info');
+export function onCrystalStructure(crystalStructure, divId) {
+    var subInfoDiv = document.getElementById(divId);
     subInfoDiv.innerHTML = '';
 
     var svgWrapper = document.createElement('div');
@@ -52,6 +50,23 @@ export function onCrystalStructure(crystalStructure) {
     }
 
     subInfoDiv.appendChild(svgWrapper);
+}
+
+export function onCategories(catId, divId) {
+    var subInfoDiv = document.getElementById(divId);
+    subInfoDiv.innerHTML = '';
+
+    var textWrapper = document.createElement('div');
+    textWrapper.setAttribute('id', 'element-info-categories');
+    textWrapper.setAttribute('class', 'text-wrapper');
+
+    var category = getCat(catId);
+    textWrapper.innerHTML = `
+        <h3>${category.name} (${category.nameEn})</h3>
+        <p>${category.description}</p>
+    `
+
+    subInfoDiv.appendChild(textWrapper);
 }
 
 //id1 is to hide, id2 is to show

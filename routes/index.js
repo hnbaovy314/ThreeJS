@@ -85,8 +85,58 @@ router.get('/getCT', (req, res) => {
        //HURRAY!! We are connected. :)
        console.log('Connection established to', url);
         var dbo = db.db("chemistry-lab");
+        var collection = dbo.collection("crystalStructure");
+        collection.findOne({id: req.query.id}, (err, result) => {
+          if (err) {
+            console.log("Error retrieving data");
+            throw err;
+          }
+
+          res.json(result);
+          db.close();
+        });
+      }
+    });
+});
+
+router.get('/getCat', (req, res) => {
+    MongoClient.connect(url, function (err, db) {
+      if (err) {
+          console.log('Unable to connect to the mongoDB server. Error:', err);
+          throw err;
+      }
+      else
+      {
+       //HURRAY!! We are connected. :)
+       console.log('Connection established to', url);
+        var dbo = db.db("chemistry-lab");
         var collection = dbo.collection("categories");
         collection.findOne({id: req.query.id}, (err, result) => {
+          if (err) {
+            console.log("Error retrieving data");
+            throw err;
+          }
+
+          res.json(result);
+          db.close();
+        });
+      }
+    });
+});
+
+router.get('/getCN', (req, res) => {
+    MongoClient.connect(url, function (err, db) {
+      if (err) {
+          console.log('Unable to connect to the mongoDB server. Error:', err);
+          throw err;
+      }
+      else
+      {
+       //HURRAY!! We are connected. :)
+       console.log('Connection established to', url);
+        var dbo = db.db("chemistry-lab");
+        var collection = dbo.collection("categories");
+        collection.findOne({id: req.query.id}, {_id: 0, name: 1, nameEn: 1}, (err, result) => {
           if (err) {
             console.log("Error retrieving data");
             throw err;
