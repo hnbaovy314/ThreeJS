@@ -244,14 +244,19 @@ LabGuide = function(gui, controls, labScene) {
 
     this.moveToPeriodicTable = function() {
         new TWEEN.Tween(scope.controls.target)
-        .to({x: 25, y: 30, z: -20}, 500)
+        .to({x: 49, y: 35, z: -25}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
 
         new TWEEN.Tween(scope.labScene.camera.position)
-        .to({x: 25, y: 30, z: -20}, 500)
+        .to({x: 25, y: 35, z:-25}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
+
+        // new TWEEN.Tween(scope.labScene.camera.rotation)
+        // .to({y: Math.PI/2}, 500)
+        // .easing(TWEEN.Easing.Quadratic.InOut)
+        // .start();
     }
 
     // Internals
