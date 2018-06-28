@@ -82,11 +82,11 @@ var unit1 = {
         content: {
             0:  {
                 type: 'pure-text',
-                content: 'Welcome to your first lesson. In this lesson, we will learn about bla bla bla...'
+                content: 'AAAAAAAAAAAAAAAA'
             },
             1:  {
                 type: 'pure-text',
-                content: "Temporarily turn off the tab and try doing an experiment. There will be instructions for you to follow!"
+                content: "AAAAAAAAAAAAAAAAAAA"
             }
         }
     },
@@ -270,46 +270,17 @@ var unit3 = {
     },
 }
 
-UnitLoop = function(camera, controls, labScene, labGuide) {
-    
-    this.camera = camera;
-
-    this.controls = controls;
-
-    this.labScene = labScene;
+Lessons = function(labGuide) {
 
     this.labGuide = labGuide;
 
     this.readyForNextStep = false;
 
-    this.unit1 = function(event) {
-        event.preventDefault();
-
-        scope.labGuide.moveToDesk();
-        scope.labGuide.raycaster.prevPos = "lab-desk";
-
-        currentUnit = unit1;
-        startUnit('Unit 1');
-    }
-
-    this.unit2 = function(event) {
-        event.preventDefault();
-
-        scope.labGuide.moveToDesk();
-        scope.labGuide.raycaster.prevPos = "lab-desk";
-
-        currentUnit = unit2;
-        startUnit('Unit 2');
-    }
-
-    this.unit3 = function(event) {
-        event.preventDefault();
-
-        scope.labGuide.moveToDesk();
-        scope.labGuide.raycaster.prevPos = "lab-desk";
-
-        currentUnit = unit3;
-        startUnit('Unit 3');
+    this.listUnit = function() {
+        document.getElementById("gtab-content-body").innerHTML = '<ul><li><a id="unit-1" href="javascript:void(0)">Unit 1</a></li><li><a id="unit-2" href="javascript:void(0)">Unit 2</a></li><li><a id="unit-3" href="javascript:void(0)">Unit 3</a></li></ul>';
+        document.getElementById('unit-1').addEventListener('click', getUnit1, false);
+        document.getElementById('unit-2').addEventListener('click', getUnit2, false);
+        document.getElementById('unit-3').addEventListener('click', getUnit3, false);
     }
 
     this.init = function() {
@@ -340,11 +311,17 @@ UnitLoop = function(camera, controls, labScene, labGuide) {
             // document.getElementById("gtab-pagination-page").innerHTML = page + ' / ' + guideTexts.length;
             gtabContentBody.innerHTML = stepTextContent[stepTextPage];
         });
-    }
 
-    this.reset = function() {
-        running = false;
-        currentUnit = null;
+        document.getElementById('gtab-back-to-menu').addEventListener("click", function(event) {
+            event.preventDefault();
+
+            reset();
+            scope.labGuide.getMainMenu('lessons');
+        })
+
+        document.getElementById("gtab-back-to-scene").addEventListener("click", scope.labGuide.turnOffGuideTab, false);
+
+        scope.labGuide.getMainMenu('lessons');
     }
 
     this.checkNextStep = function() {
@@ -364,7 +341,6 @@ UnitLoop = function(camera, controls, labScene, labGuide) {
                     step += 1;
                     needUpdate = true;
                     scope.readyForNextStep = false;
-                    scope.labScene.reset();
                     scope.labGuide.reset();
 
                     break;
@@ -410,8 +386,8 @@ UnitLoop = function(camera, controls, labScene, labGuide) {
                     break;
                 }
                 case 'experiment': {
-                    scope.labScene.addLabware(currentStep.content);
-                    scope.labGuide.raycaster.enableInteractingWithLabware(currentStep.content);
+                    scope.labGuide.labScene.addLabware(currentStep.content);
+                    scope.labGuide.enableInteractingWithLabware(currentStep.content);
 
                     needUpdate = false;
                     break;
@@ -431,6 +407,36 @@ UnitLoop = function(camera, controls, labScene, labGuide) {
 
     var running = false;
 
+    function getUnit1(event) {
+        event.preventDefault();
+
+        scope.labGuide.moveToDesk();
+        scope.labGuide.prevPos = "lab-desk";
+
+        currentUnit = unit1;
+        startUnit('Unit 1');
+    }
+
+    function getUnit2(event) {
+        event.preventDefault();
+
+        scope.labGuide.moveToDesk();
+        scope.labGuide.prevPos = "lab-desk";
+
+        currentUnit = unit2;
+        startUnit('Unit 2');
+    }
+
+    function getUnit3(event) {
+        event.preventDefault();
+
+        scope.labGuide.moveToDesk();
+        scope.labGuide.prevPos = "lab-desk";
+
+        currentUnit = unit3;
+        startUnit('Unit 3');
+    }
+
     function startUnit(unit) {
         running = true;
         step = 0;
@@ -442,5 +448,11 @@ UnitLoop = function(camera, controls, labScene, labGuide) {
         gtabContentBody.innerHTML = '';
         document.getElementById('gtab-back-to-menu').style.pointerEvents = "auto";
         document.getElementById('gtab-back-to-menu').style.opacity = 1;
+    }
+
+    function reset() {
+        running = false;
+        currentUnit = null;
+        scope.labGuide.reset();
     }
 }

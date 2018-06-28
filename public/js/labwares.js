@@ -408,7 +408,8 @@ Labwares = function(labScene, gui) {
                     .load('trashbin.obj', function(object) {
                         object.traverse(function(child) {
                             if (child instanceof THREE.Mesh) {
-                                child.material.color.setHex(0x696969);                            }
+                                child.material.color.setHex(0x696969);                            
+                            }
                         });
 
                         object.scale.set(0.4, 0.4, 0.4);
