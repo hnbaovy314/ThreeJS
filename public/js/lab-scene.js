@@ -575,10 +575,6 @@ LabScene = function(gui, camera, scene, renderer, controls) {
         //
         // scope.scene.fog = new THREE.Fog(0xFFFFFF, 0.1, 5000);
 
-        // Load labware models
-        scope.labwares.init();
-        loadAnimations();
-
         // Create Periodic Table
         scope.periodicTable.init();
 

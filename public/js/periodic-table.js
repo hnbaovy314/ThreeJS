@@ -61,29 +61,7 @@ PeriodicTable = function(labScene) {
         for (var i=0; i < elements.length; i++){
             elements[i].eConf = make1DArray(elements[i].eConf);
         }
-
-        // // Init for default camera, used throughout the app
-        // defaultCamera = new THREE.PerspectiveCamera(
-        //     70,
-        //     window.innerWidth / window.innerHeight,
-        //     1,
-        //     100
-        // );
-        // defaultCamera.position.set(0, 0, 0);
-        // currentCamera = defaultCamera;
-
-        //Init for periodic table scene as the default scene
         raycaster = new THREE.Raycaster();
-
-        // tableRenderer = new THREE.WebGLRenderer();
-        // tableRenderer.setPixelRatio(window.devicePixelRatio);
-        // tableRenderer.setSize(window.innerWidth, window.innerHeight);
-        // tableRenderer.setClearColor(0xecf0f1, 1);
-        // currentRenderer = tableRenderer;
-
-        // container.appendChild(currentRenderer.domElement);
-        // container.appendChild(previewPanel);
-        // container.appendChild(dataScreen);
 
         //for labScene
         var geo = new THREE.BoxGeometry(5, 50, 75);

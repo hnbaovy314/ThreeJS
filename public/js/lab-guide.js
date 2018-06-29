@@ -171,11 +171,10 @@ LabGuide = function(gui, labScene) {
 
         scope.lessons.update();
         scope.labScene.update();
-        scope.raycaster.update();
-        scope.unitLoop.update();
+        scope.animation.update();
         controls.update();
-        if (scope.labScene.periodicTable.ptEnabled == true) {
-            scope.labScene.periodicTable.setMouse(scope.raycaster.mouseraycast);
+        if (scope.labScene.periodicTable.ptEnabled === true) {
+            scope.labScene.periodicTable.setMouse(mouse);
             scope.labScene.periodicTable.update();
         }
     }
@@ -223,7 +222,7 @@ LabGuide = function(gui, labScene) {
     // Turn off the guide tab
     this.turnOffGuideTab = function(event) {
         event.preventDefault();
-        if (scope.raycaster.currentPos == "element-table"){
+        if (scope.currentPos == "element-table"){
             scope.labScene.periodicTable.ptEnabled = true;
         }
 
@@ -262,24 +261,10 @@ LabGuide = function(gui, labScene) {
         .start();
     }
 
-    this.moveToElementTable = function() {
-        scope.labScene.elementTable.enabled = true;
-
-        new TWEEN.Tween(scope.labScene.controls.target)
-        .to({x: 0, y: 30, z: 42.51}, 500)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-
-        new TWEEN.Tween(scope.labScene.camera.position)
-        .to({x: 0, y: 30, z: 42.5}, 500)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-    }
-
     this.moveToPeriodicTable = function() {
         scope.labScene.periodicTable.ptEnabled = true;
 
-        new TWEEN.Tween(scope.controls.target)
+        new TWEEN.Tween(scope.labScene.controls.target)
         .to({x: 49, y: 30, z: -25}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
@@ -435,7 +420,7 @@ LabGuide = function(gui, labScene) {
                 case "element-table": {
                     scope.currentPos = "element-table";
                     hideInfoPanel();
-                    scope.moveToElementTable();
+                    scope.moveToPeriodicTable();
                     break;
                 }
                 default: break;
