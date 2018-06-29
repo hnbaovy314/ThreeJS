@@ -4,19 +4,283 @@ var initGuideTexts = [
     "To start with the lab tutorial experience, please bring up the tab on your left hand"
 ]
 
-LabGuide = function(gui, controls, labScene) {
-
-    this.controls = controls;
+LabGuide = function(gui, labScene) {
+    this.gui = gui;
 
     this.labScene = labScene;
 
-    this.raycaster = new Raycaster(gui, controls, labScene, this);
+    this.lessons = new Lessons(this);
 
-    this.unitLoop = null;
+    this.raycaster = new THREE.Raycaster();
 
-    this.gui = gui;
+    this.animation = new Animation(this);
+
+    this.currentPos = ''
+    this.prevPos = '';
 
     this.init = function(raycastTarget) {
+        initOnScreenGuideSys();
+        scope.createGuideText(initGuideTexts);
+
+        loadGuideTab();
+
+        scope.animation.init();
+        scope.lessons.init();
+
+        document.addEventListener('mousemove', onDocumentMouseMove, false);
+        document.addEventListener('mousedown', onDocumentMouseDown, false);
+    }
+
+    this.getMainMenu = function(section) {
+        document.getElementById('gtab-back-to-menu').style.pointerEvents = "none";
+        document.getElementById('gtab-back-to-menu').style.opacity = 0.5;
+
+        document.getElementById('gtab-pagination').style.visibility = "hidden";
+
+        switch(section) {
+            case 'lessons': {
+                document.getElementById('gtab-content-header').innerHTML = '<h4>' + section.charAt(0).toUpperCase() + section.slice(1) + '</h4>';
+
+                scope.lessons.listUnit();
+
+                break;
+            }
+            default: break;
+        }
+    }
+
+    this.createGuideText = function(texts) {
+        page = 0;
+        guideTexts = texts;
+
+        document.getElementById("gt-pagination-page").innerHTML = (page + 1) + ' / ' + texts.length;
+        document.getElementById("gt-body").innerHTML = texts[page];
+
+        document.getElementById("guide-text").style.visibility = "visible";
+        document.getElementById("guide-text").style.opacity = 1;
+    }
+
+    this.hideGuideText = function() {
+        document.getElementById("guide-text").style.visibility = "hidden";
+        document.getElementById("guide-text").style.opacity = 0;
+    }
+
+    this.reset = function() {
+        resetInteractiveSettings();
+        scope.resetToEmptyHand();
+        scope.hideGuideText();
+        scope.labScene.reset();
+        scope.animation.reset();
+    }
+
+    this.resetToEmptyHand = function() {
+        var hand = scope.labScene.camera.children[1];
+        var handAttachment = hand.children[1];
+
+        hand.rotation.set(-1.25, -0.5, 0);
+        hand.position.set(2.75, -3, -4.5);
+
+        if (handAttachment) {
+            hand.remove(handAttachment);
+            scope.labScene.destroy(handAttachment);
+        };
+    }
+
+    this.enableInteractingWithLabware = function(content) {
+        enableInteractingWithLabware = true;
+        interactive = {
+            labwares: content.labware,
+            steps: content.steps
+        }
+
+        scope.createGuideText(interactive.steps[0].guideText);
+    }
+
+    this.nextInteractiveStep = function() {
+        interactiveStep += 1;
+
+        // If the previous action is "reaction",
+        // We need to decrease the interactiveStep by 1
+        // to get the correct guideText
+        if (interactiveStep > interactive.steps.length - 1) {
+            console.log("Eos");
+            scope.lessons.readyForNextStep = true;
+            enableInteractingWithLabware = false;
+        }
+
+        if (interactive.steps[interactiveStep]) {
+            var guideText = interactive.steps[interactiveStep].guideText;
+            if (guideText) {
+                scope.createGuideText(guideText);
+            }
+        }
+
+        mouseClickLock = false;
+        checkForReaction();
+    }
+
+    this.update = function() {
+        if (!guideLock) {
+            scope.raycaster.setFromCamera(mouse, scope.labScene.camera);
+            var intersects = scope.raycaster.intersectObjects(scope.labScene.raycastTarget, true);
+            if (intersects.length > 0) {
+                if (INTERSECTED != intersects[0].object.parent) {
+                    if (INTERSECTED) {
+                        INTERSECTED.traverse(function(child) {
+                            if (labScene.scene.getObjectByName(INTERSECTED.name + "-helper")) {
+                                labScene.scene.getObjectByName(INTERSECTED.name + "-helper").material.opacity = 0;
+                            }
+
+                            hideInfoPanel();
+                        })
+                    }
+
+                    INTERSECTED = intersects[0].object.parent;
+
+                    if (INTERSECTED.name == "bypass") {
+                        INTERSECTED = INTERSECTED.parent;
+                    }
+
+                    INTERSECTED.traverse(function(child) {
+                        if (labScene.scene.getObjectByName(INTERSECTED.name + "-helper")) {
+                            if (INTERSECTED.name != scope.currentPos) {
+                                labScene.scene.getObjectByName(INTERSECTED.name + "-helper").material.opacity = 1;
+                                getInfoPanel();
+                            }
+                        } else if (child instanceof THREE.Mesh) {
+                            if (INTERSECTED.name != scope.currentPos) {
+                                getInfoPanel();
+                            }
+                        }
+                    })
+                }
+            } else {
+                if (INTERSECTED) {
+                    INTERSECTED.traverse(function(child) {
+                        if (labScene.scene.getObjectByName(INTERSECTED.name + "-helper")) {
+                            labScene.scene.getObjectByName(INTERSECTED.name + "-helper").material.opacity = 0;
+                        }
+
+                        hideInfoPanel();
+                    })
+                }
+
+                INTERSECTED = null;
+            }
+        }
+
+        scope.lessons.update();
+        scope.labScene.update();
+<<<<<<< HEAD
+        scope.raycaster.update();
+        scope.unitLoop.update();
+        controls.update();
+=======
+        scope.animation.update();
+>>>>>>> e24ee607d8c3e90bb25c2ab7dd1382b0184fd51b
+    }
+
+    // Move to experiment desk position
+    this.moveToDesk = function() {
+        new TWEEN.Tween(scope.labScene.controls.target)
+        .to({x: -25.01, y: 27.5, z: -27}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        new TWEEN.Tween(scope.labScene.camera.position)
+        .to({x: -25, y: 27.5, z: -27}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+    }
+
+    // Bring up the guide tab
+    this.bringUpGuideTab = function() {
+        new TWEEN.Tween(INTERSECTED.rotation)
+        .to({x: 0, y: 0, z: 0}, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        new TWEEN.Tween(INTERSECTED.position)
+        .to({x: -3.29, y: 0.5, z: -1.75}, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onComplete(function() {
+            document.getElementById("guide-tab").style.visibility = "visible";
+            document.getElementById("guide-tab").style.opacity = 1;
+            document.getElementById("guide-tab").style.pointerEvents = "auto";
+        })
+        .start();
+
+        INTERSECTED.parent.children[1].visible = false;
+
+        guideLock = true;
+        scope.lessons.checkNextStep();
+    }
+
+    // Turn off the guide tab
+    this.turnOffGuideTab = function(event) {
+        event.preventDefault();
+
+        document.getElementById("guide-tab").style.visibility = "hidden";
+        document.getElementById("guide-tab").style.opacity = 0;
+        document.getElementById("guide-tab").style.pointerEvents = "none";
+
+        new TWEEN.Tween(INTERSECTED.rotation)
+        .to({x: -0.5, y: 0, z: 0.05}, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        new TWEEN.Tween(INTERSECTED.position)
+        .to({x: -4.5, y: -2.2, z: -3}, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        INTERSECTED.parent.children[1].visible = true;
+
+        guideLock = false;
+        scope.currentPos = scope.prevPos;
+        scope.lessons.checkNextStep();
+    }
+
+     // Move to window position
+    this.moveToWindow = function() {
+        new TWEEN.Tween(scope.labScene.controls.target)
+        .to({x: 0, y: 30, z: 42.51}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        new TWEEN.Tween(scope.labScene.camera.position)
+        .to({x: 0, y: 30, z: 42.5}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+    }
+
+    this.moveToElementTable = function() {
+        scope.labScene.elementTable.enabled = true;
+
+        new TWEEN.Tween(scope.labScene.controls.target)
+        .to({x: 0, y: 30, z: 42.51}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        new TWEEN.Tween(scope.labScene.camera.position)
+        .to({x: 0, y: 30, z: 42.5}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+    }
+
+    // Internals
+    var scope = this;
+
+    var guideTexts, page = 0;
+
+    var mouse = new THREE.Vector2(), infoMouse = new THREE.Vector2();
+
+    var infoPanel = document.getElementById("info-panel");
+
+    var guideLock = false, mouseClickLock = false;
+    var enableInteractingWithLabware = false, interactive = null, interactiveStep = 0, INTERSECTED = null;
+
+    function loadGuideTab() {
         // Load the tablet
         new THREE.OBJLoader()
         .setPath('models/')
@@ -75,7 +339,9 @@ LabGuide = function(gui, controls, labScene) {
                 leftHand.rotation.set(0, -1, 0.5)
             });
         });
+    }
 
+    function initOnScreenGuideSys() {
         document.getElementById("gt-close-button").addEventListener("click", function(event) {
             event.preventDefault();
 
@@ -106,169 +372,199 @@ LabGuide = function(gui, controls, labScene) {
             document.getElementById("gt-pagination-page").innerHTML = (page + 1) + ' / ' + guideTexts.length;
             document.getElementById("gt-body").innerHTML = guideTexts[page];
         });
-
-        document.getElementById('gtab-back-to-menu').addEventListener("click", function(event) {
-            event.preventDefault();
-
-            scope.unitLoop.reset();
-            scope.labScene.reset();
-            scope.reset();
-            getMainMenu('lessons');
-        })
-
-        document.getElementById("gtab-back-to-scene").addEventListener("click", scope.turnOffGuideTab, false);
-
-        scope.createGuideText(initGuideTexts);
-        scope.raycaster.init();
-        scope.unitLoop = new UnitLoop(scope.labScene.camera, scope.controls, scope.labScene, scope);
-        scope.unitLoop.init();
-
-        getMainMenu('lessons');
     }
 
-    this.createGuideText = function(texts) {
-        page = 0;
-        guideTexts = texts;
+    // -------------------------
 
-        document.getElementById("gt-pagination-page").innerHTML = (page + 1) + ' / ' + texts.length;
-        document.getElementById("gt-body").innerHTML = texts[page];
-
-        document.getElementById("guide-text").style.visibility = "visible";
-        document.getElementById("guide-text").style.opacity = 1;
-    }
-
-    this.hideGuideText = function() {
-        document.getElementById("guide-text").style.visibility = "hidden";
-        document.getElementById("guide-text").style.opacity = 0;
-    }
-
-    this.reset = function() {
-        scope.raycaster.resetInteractiveSettings();
-        scope.resetToEmptyHand();
-        scope.hideGuideText();
-    }
-
-    this.resetToEmptyHand = function() {
-        var hand = scope.labScene.camera.children[1];
-        var handAttachment = hand.children[1];
-
-        hand.rotation.set(-1.25, -0.5, 0);
-        hand.position.set(2.75, -3, -4.5);
-
-        if (handAttachment) {
-            hand.remove(handAttachment);
-            scope.labScene.destroy(handAttachment);
-        };
-    }
-
-    this.update = function() {
-        scope.labScene.update();
-        scope.raycaster.update();
-        scope.unitLoop.update();
-        controls.update();
-    }
-
-    // Move to experiment desk position
-    this.moveToDesk = function() {
-        new TWEEN.Tween(scope.controls.target)
-        .to({x: -25.01, y: 27.5, z: -27}, 500)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-
-        new TWEEN.Tween(scope.labScene.camera.position)
-        .to({x: -25, y: 27.5, z: -27}, 500)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-    }
-
-    // Bring up the guide tab
-    this.bringUpGuideTab = function() {
-        new TWEEN.Tween(scope.raycaster.INTERSECTED.rotation)
-        .to({x: 0, y: 0, z: 0}, 300)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-
-        new TWEEN.Tween(scope.raycaster.INTERSECTED.position)
-        .to({x: -3.29, y: 0.5, z: -1.75}, 300)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .onComplete(function() {
-            document.getElementById("guide-tab").style.visibility = "visible";
-            document.getElementById("guide-tab").style.opacity = 1;
-            document.getElementById("guide-tab").style.pointerEvents = "auto";
-        })
-        .start();
-
-        scope.raycaster.INTERSECTED.parent.children[1].visible = false;
-
-        guideLock = true;
-        scope.unitLoop.checkNextStep();
-    }
-
-    // Turn off the guide tab
-    this.turnOffGuideTab = function(event) {
+    function onDocumentMouseMove(event) {
         event.preventDefault();
 
-        document.getElementById("guide-tab").style.visibility = "hidden";
-        document.getElementById("guide-tab").style.opacity = 0;
-        document.getElementById("guide-tab").style.pointerEvents = "none";
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        new TWEEN.Tween(scope.raycaster.INTERSECTED.rotation)
-        .to({x: -0.5, y: 0, z: 0.05}, 300)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-
-        new TWEEN.Tween(scope.raycaster.INTERSECTED.position)
-        .to({x: -4.5, y: -2.2, z: -3}, 300)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-
-        scope.raycaster.INTERSECTED.parent.children[1].visible = true;
-
-        guideLock = false;
-        scope.raycaster.currentPos = scope.raycaster.prevPos;
-        scope.unitLoop.checkNextStep();
+        infoMouse.x = event.clientX;
+        infoMouse.y = event.clientY;
     }
 
-     // Move to window position
-    this.moveToWindow = function() {
-        new TWEEN.Tween(scope.controls.target)
-        .to({x: 0, y: 30, z: 42.51}, 500)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
+    function onDocumentMouseDown(event) {
+        event.preventDefault();
 
-        new TWEEN.Tween(scope.labScene.camera.position)
-        .to({x: 0, y: 30, z: 42.5}, 500)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-    }
-
-    // Internals
-    var scope = this;
-
-    var guideTexts, page = 0;
-
-    function getMainMenu(section) {
-        document.getElementById('gtab-back-to-menu').style.pointerEvents = "none";
-        document.getElementById('gtab-back-to-menu').style.opacity = 0.5;
-
-        document.getElementById('gtab-pagination').style.visibility = "hidden";
-
-        switch(section) {
-            case 'lessons': {
-                document.getElementById('gtab-content-header').innerHTML = '<h4>' + section.charAt(0).toUpperCase() + section.slice(1) + '</h4>';
-
-                listUnit();
-
-                break;
+        if (INTERSECTED && INTERSECTED.name != scope.currentPos) {
+            switch(INTERSECTED.name) {
+                case "guide-tab": {
+                    scope.prevPos = scope.currentPos;
+                    scope.currentPos = "guide-tab";
+                    hideInfoPanel();
+                    scope.bringUpGuideTab();
+                    break;
+                }
+                case "window": {
+                    scope.currentPos = "window";
+                    hideInfoPanel();
+                    scope.moveToWindow();
+                    break;
+                }
+                case "lab-desk": {
+                    scope.currentPos = "lab-desk";
+                    hideInfoPanel();
+                    scope.moveToDesk();
+                    break;
+                }
+                case "element-table": {
+                    scope.currentPos = "element-table";
+                    hideInfoPanel();
+                    scope.moveToElementTable();
+                    break;
+                }
+                default: break;
             }
-            default: break;
+        }
+
+        if (enableInteractingWithLabware && !scope.mouseClickLock) {
+            var labware = interactive.labwares[interactive.steps[interactiveStep].target - 1];
+            if (INTERSECTED && INTERSECTED.contentId == labware.id) {
+                mouseClickLock = true;
+                scope.animation.getInteractiveAnimation(interactive.steps[interactiveStep].action, INTERSECTED);
+            }
         }
     }
 
-    function listUnit() {
-        document.getElementById("gtab-content-body").innerHTML = '<ul><li><a id="unit-1" href="javascript:void(0)">Unit 1</a></li><li><a id="unit-2" href="javascript:void(0)">Unit 2</a></li><li><a id="unit-3" href="javascript:void(0)">Unit 3</a></li></ul>';
-        document.getElementById('unit-1').addEventListener('click', scope.unitLoop.unit1, false);
-        document.getElementById('unit-2').addEventListener('click', scope.unitLoop.unit2, false);
-        document.getElementById('unit-3').addEventListener('click', scope.unitLoop.unit3, false);
+    // Preview Info Panel
+    function getInfoPanel() {
+        if (!scope.labScene.previewInfo[INTERSECTED.name]) {
+            return;
+        }
+
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        var panelWidth = 300;
+        var panelHeight = 100;
+        var offsetX =  panelWidth / 4;
+        var offsetY =  panelHeight / 4;
+
+        var newPos = {x: 0, y: 0};
+        newPos.x = infoMouse.x + offsetX;
+        newPos.y = infoMouse.y + offsetY;
+
+        // Check for overflow
+        if (newPos.x + panelWidth >= width ) {
+            newPos.x = width - panelWidth - 10;
+        }
+        if (newPos.y + panelHeight >= height) {
+            newPos.y = height - panelHeight - 10;
+        }
+
+        infoPanel.innerHTML = `
+            <h3>${scope.labScene.previewInfo[INTERSECTED.name].name}</h3>
+            <p>${scope.labScene.previewInfo[INTERSECTED.name].desc}</p>`;
+        infoPanel.style.transform = 'translate(' + newPos.x + 'px, ' + newPos.y + 'px)';
+        infoPanel.style.opacity = 1;
+    }
+
+    // Hide element preview data panel
+    function hideInfoPanel() {
+        infoPanel.style.opacity = 0;
+    }
+
+    // ---------------------
+    function checkForReaction() {
+        if (!enableInteractingWithLabware) {
+            return;
+        }
+
+        var step = interactive.steps[interactiveStep];
+        var labware = interactive.labwares[step.target - 1];
+
+        if (step.action == "reaction") {
+            var target = scope.labScene.labwares.interactingTargets[step.target - 1];
+
+            switch (step.reaction.type) {
+                case "change-texture": {
+                    switch (labware.name) {
+                        case 'spilled-chemical': {
+                            new THREE.TextureLoader()
+                            .load("textures/chemical/sulphur.jpg", function(texture) {
+                                target.children[0].material.map = texture;
+                                target.children[0].material.needsUpdate = true;
+
+                                var r = (target.boundingBox.max.x - target.boundingBox.min.x) / 6;
+                                var h = (target.boundingBox.max.y - target.boundingBox.min.y) / 4;
+                                var pile = new THREE.Mesh(
+                                    new THREE.ConeBufferGeometry(r, h, 32, 32),
+                                    new THREE.MeshPhongMaterial({
+                                        map: texture
+                                    })
+                                )
+
+                                target.add(pile);
+                                pile.position.y += h / 2;
+                                pile.position.z += 150;
+                            });
+
+                            break;
+                        }
+                        default: break;
+                    }
+
+                    break;
+                }
+                case 'evaporate': {
+                    switch (labware.name) {
+                        case 'test-tube': {
+                            var object = target.children[0];
+                            object.container = labware.name;
+
+                            if (labware.reversed) {
+                                object.reversed = true;
+                            }
+
+                            setTimeout(function() {
+                                scope.animation.getParticleSystem("bubble", object);
+                            }, 1000);
+
+                            break;
+                        }
+                        case 'retort': {
+                            var object = target.children[2];
+                            object.container = labware.name;
+
+                            setTimeout(function() {
+                                scope.animation.getParticleSystem("bubble", object);
+                            }, 1000);
+
+                            break;
+                        }
+                        default: {
+                            var object = target.children[0];
+                            object.container = labware.name;
+
+                            if (labware.reversed) {
+                                object.reversed = true;
+                            }
+
+                            setTimeout(function() {
+                                scope.animation.getParticleSystem("bubble", object);
+                            }, 1000);
+
+                            break;
+                        };
+                    }
+
+                    break;
+                }
+                default: break;
+            }
+
+            scope.nextInteractiveStep();
+        };
+    }
+
+    // ---------------------
+    // Reset functions
+    function resetInteractiveSettings() {
+        interactive = null;
+        interactiveStep = 0;
+        enableInteractingWithLabware = false;
+        scope.labScene.labwares.reset();
     }
 }

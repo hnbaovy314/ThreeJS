@@ -42,9 +42,9 @@ function init() {
     controls.target.set(34.995, 30, -29.99);
     // ----------------------------------------------------
     
-    labScene = new LabScene(gui, camera, scene);
+    labScene = new LabScene(gui, camera, scene, renderer, controls);
     labScene.init();
-    labGuide = new LabGuide(gui, controls, labScene);
+    labGuide = new LabGuide(gui, labScene);
     labGuide.init();
 
     window.addEventListener('resize', onWindowResize, false);
@@ -62,8 +62,7 @@ function animate() {
 }
 
 function render() {
+    // labScene.update();
     labGuide.update();
-    controls.update();
     TWEEN.update();
-    renderer.render(scene, camera);
 }
