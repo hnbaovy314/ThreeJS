@@ -171,17 +171,19 @@ LabGuide = function(gui, labScene) {
 
         scope.lessons.update();
         scope.labScene.update();
-<<<<<<< HEAD
         scope.raycaster.update();
         scope.unitLoop.update();
         controls.update();
-=======
-        scope.animation.update();
->>>>>>> e24ee607d8c3e90bb25c2ab7dd1382b0184fd51b
+        if (scope.labScene.periodicTable.ptEnabled == true) {
+            scope.labScene.periodicTable.setMouse(scope.raycaster.mouseraycast);
+            scope.labScene.periodicTable.update();
+        }
     }
 
     // Move to experiment desk position
     this.moveToDesk = function() {
+        scope.labScene.periodicTable.ptEnabled = false;
+
         new TWEEN.Tween(scope.labScene.controls.target)
         .to({x: -25.01, y: 27.5, z: -27}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
@@ -195,6 +197,8 @@ LabGuide = function(gui, labScene) {
 
     // Bring up the guide tab
     this.bringUpGuideTab = function() {
+        scope.labScene.periodicTable.ptEnabled = false;
+
         new TWEEN.Tween(INTERSECTED.rotation)
         .to({x: 0, y: 0, z: 0}, 300)
         .easing(TWEEN.Easing.Quadratic.InOut)
@@ -219,6 +223,9 @@ LabGuide = function(gui, labScene) {
     // Turn off the guide tab
     this.turnOffGuideTab = function(event) {
         event.preventDefault();
+        if (scope.raycaster.currentPos == "element-table"){
+            scope.labScene.periodicTable.ptEnabled = true;
+        }
 
         document.getElementById("guide-tab").style.visibility = "hidden";
         document.getElementById("guide-tab").style.opacity = 0;
@@ -243,6 +250,7 @@ LabGuide = function(gui, labScene) {
 
      // Move to window position
     this.moveToWindow = function() {
+        scope.labScene.periodicTable.ptEnabled = false;
         new TWEEN.Tween(scope.labScene.controls.target)
         .to({x: 0, y: 30, z: 42.51}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
@@ -264,6 +272,20 @@ LabGuide = function(gui, labScene) {
 
         new TWEEN.Tween(scope.labScene.camera.position)
         .to({x: 0, y: 30, z: 42.5}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+    }
+
+    this.moveToPeriodicTable = function() {
+        scope.labScene.periodicTable.ptEnabled = true;
+
+        new TWEEN.Tween(scope.controls.target)
+        .to({x: 49, y: 30, z: -25}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+
+        new TWEEN.Tween(scope.labScene.camera.position)
+        .to({x: 24, y: 30, z:-25}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
     }

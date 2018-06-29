@@ -1,71 +1,125 @@
-import {getECTName} from './dataRetriever.js';
-import {onCrystalStructure} from './eventListener.js';
-export function getElementInfo(element, divId, eConf) {
-    var infoText = document.getElementById(divId);
-    var eCT = '';
-    if (element.crystalStructure === Array) {
-        eCT = '<ul>';
-        for (var i=0; i<element.crystalStructure.length; i++) {
-            var eCTValue = getECTName(element.crystalStructure[i]).name;
-            eCT = eCT.concat(`<li>${eCTValue}</li>`);
+ElementTools = function () {
+    const orbit = ['1s', '2s', '2p', '3s', '3p', '3d', '4s', '4p', '4d', '4f', '5s', '5p',
+                '5d', '5f', '6s', '6p', '6d', '7s', '7p'];
+    const dataRetriever = new DataRetriever();
+
+    this.clearDiv = function(divId) {
+        var div = document.getElementById(divId);
+        div.innerHTML = '';
+    }
+
+    //Load image for each image in detail page
+    this.getElementImg = function(divId, atomicNumber) {
+        var div = document.getElementById(divId);
+        var imgWrapper = document.createElement('div');
+        var img = document.createElement('img');
+
+        imgWrapper.setAttribute('id', 'element-info-img');
+        imgWrapper.setAttribute('class', 'img-wrapper');
+        img.setAttribute('id', 'element-img');
+        img.setAttribute('src', `./img/elements/${atomicNumber}.jpg`);
+
+        imgWrapper.appendChild(img);
+        div.appendChild(imgWrapper);
+
+        var imageHeight, wrapperHeight, overlap, container = $('.image-wrapper');
+
+        function centerImage() {
+            imageHeight = container.find('img').height();
+            wrapperHeight = container.height();
+            overlap = (wrapperHeight - imageHeight) / 2;
+            container.find('img').css('margin-top', overlap);
         }
-        eCT = eCT.concat('</ul>');
+
+        $(window).on("load resize", centerImage);
     }
-    else {
-        eCT = getECTName(element.crystalStructure).name;
+
+    this.loadBGM = function(link){
+        document.write('<audio loop autoplay="autoplay">');
+        document.write('<source src="'+link+'" type="audio/mpeg">');
+        document.write('<!--[if lt IE 9]>');
+        document.write('<bgsound src="'+link+'" loop="100">');
+        document.write('<![endif]-->');
+        document.write('</audio>');
     }
-    var author = '';
-    for (var i=0; i < element.discovery.by.length; i++){
-        if (i > 0) {
-            author = author.concat(' và ');
+
+    this.calcElectronConf = function(z, eConf) {
+      var eConfig = '';
+      for (var i=0; i < eConf.length; i++){
+          eConfig = eConfig.concat(orbit[i], eConf[i].toString(), ' ');
+      }
+      if (z > 10 & z <= 18){
+        eConfig = eConfig.replace('1s2 2s2 2p6 ', '[Ne]');
+      }
+      else if (z > 18 & z <= 36){
+        eConfig = eConfig.replace('1s2 2s2 2p6 3s2 3p6 ', '[Ar]');
+      }
+      else if (z > 36 & z <= 54){
+        eConfig = eConfig.replace('1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 ', '[Kr]');
+      }
+      else if (z > 54 & z <= 86){
+        var f4 = eConfig.match(/4f[1-9]+/);
+        eConfig = eConfig.replace(/1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10[a-z 1-9]+5s2 5p6/, '[Xe] ');
+        eConfig = eConfig.slice(0, 5) + f4 + eConfig.slice(5);
+      }
+      else {
+        var f5 = eConfig.match(/5f[1-9]+/)
+        eConfig = eConfig.replace(/1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10[a-z 1-9]+6s2 6p6/, '[Rn] ');
+        eConfig = eConfig.slice(0, 5) + f5 + eConfig.slice(5);
+      }
+
+      return eConfig;
+    }
+
+    // Create orbit layer of eletrons
+    this.getElementModelOrbitLayer = function(electronNumber, radius, tilt, z) {
+        var orbitContainer = new THREE.Object3D();
+        orbitContainer.rotation.x = tilt;
+
+        var orbit = new THREE.Object3D();
+        var mergedGeometry = new THREE.Geometry();
+
+        var orbitGeometry = new THREE.CircleGeometry(radius, 100);
+        orbitGeometry.vertices.shift();
+        var line = new THREE.LineSegments(orbitGeometry, new THREE.LineBasicMaterial({color: 0x1A1A1A}));
+        line.material.depthTest = false;
+        line.material.transparent = true;
+
+        var electronGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+        var electronMaterial = new THREE.MeshBasicMaterial({
+            color: 0x1A1A1A,
+        });
+
+        var angle = 2 * Math.PI / electronNumber;
+        var count = 0;
+        for (var i = 0; i < electronNumber; i++) {
+            var x = Math.cos(angle * count) * radius;
+            var y = Math.sin(angle * count) * radius;
+            count++;
+
+            electronGeometry.translate(x, y, 0);
+            mergedGeometry.merge(electronGeometry);
+            electronGeometry.translate(-x, -y, 0);
         }
-        author = author.concat(element.discovery.by[i]);
+
+        var electronMesh = new THREE.Mesh(mergedGeometry, electronMaterial);
+
+        orbit.add(line);
+        orbit.add(electronMesh);
+
+        var tween = new TWEEN.Tween(orbit.rotation)
+            .to({z: '+' + Math.PI * 8 / radius}, 10000)
+            .repeat(Infinity)
+            .start();
+
+        orbit.name = 'electron-orbit';
+        orbitContainer.add(orbit);
+
+        meshArr.push(line);
+        meshArr.push(electronMesh);
+
+        return orbitContainer;
     }
 
-    infoText.innerHTML =
-    `<h2>${element.z} - ${element.name}</h2>
-    <ul>
-    <li>Khối lượng nguyên tử: <b>${element.atomicWeight}</b></li>
-    <li>Cấu hình electron: <b>${eConf}</b></li>
-    <li>Phân loại: <a href="" id="cat-link">${element.cat}</a></li>
-    <li>Trạng thái: ${element.phase}</li>
-    <li>Cấu trúc tinh thể: <a href="" id="structure-link">${eCT}</a></li>
-    <li>Phát hiện bởi ${author}, ${element.discovery.year}</li>
-    </ul>`;
 
-    $('#structure-link').on('click', function(){
-        $('.infoBtn-focus').removeClass('infoBtn-focus');
-        $('#infoBtn1').addClass('infoBtn-focus');
-        onCrystalStructure(element.crystalStructure);
-    });
-}
-
-export function clearDiv(divId) {
-    var div = document.getElementById(divId);
-    div.innerHTML = '';
-}
-
-export function getElementImg(divId, atomicNumber) {
-    var div = document.getElementById(divId);
-    var imgWrapper = document.createElement('div');
-    var img = document.createElement('img');
-
-    imgWrapper.setAttribute('id', 'element-info-img');
-    imgWrapper.setAttribute('class', 'img-wrapper');
-    img.setAttribute('id', 'element-img');
-    img.setAttribute('src', `./img/elements/${atomicNumber}.jpg`);
-
-    imgWrapper.appendChild(img);
-    div.appendChild(imgWrapper);
-
-    var imageHeight, wrapperHeight, overlap, container = $('.image-wrapper');
-
-    function centerImage() {
-        imageHeight = container.find('img').height();
-        wrapperHeight = container.height();
-        overlap = (wrapperHeight - imageHeight) / 2;
-        container.find('img').css('margin-top', overlap);
-    }
-
-    $(window).on("load resize", centerImage);
 }

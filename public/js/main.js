@@ -41,7 +41,7 @@ function init() {
     controls.minPolarAngle = Math.PI / 8;
     controls.target.set(34.995, 30, -29.99);
     // ----------------------------------------------------
-    
+
     labScene = new LabScene(gui, camera, scene, renderer, controls);
     labScene.init();
     labGuide = new LabGuide(gui, labScene);
