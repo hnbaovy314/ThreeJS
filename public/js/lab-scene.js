@@ -14,6 +14,8 @@ LabScene = function(gui, camera, scene, renderer) {
 
     this.labwares = new Labwares(this, gui);
 
+    this.periodicTable = new PeriodicTable(this);
+
     this.add = function(mesh) {
         scope.scene.add(mesh);
     }
@@ -839,8 +841,7 @@ LabScene = function(gui, camera, scene, renderer) {
         loadAnimations();
 
         // Create Periodic Table
-        var periodicTable = new PeriodicTable(scope.labGuide, scope);
-        periodicTable.init();
+        scope.periodicTable.init();
 
     }
 

@@ -1,4 +1,4 @@
-PeriodicTable = function(labGuide, labScene) {
+PeriodicTable = function(labScene) {
     var demoTable = [
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
         [3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 7, 8, 9, 10],
@@ -12,31 +12,25 @@ PeriodicTable = function(labGuide, labScene) {
         [0, 0, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 0]
     ];
 
-    const eleOrbit = [['1s'],
-                ['2s', '2p'],
-                ['3s', '3p', '3d'],
-                ['4s', '4p', '4d', '4f'],
-                ['5s', '5p', '5d', '5f'],
-                ['6s', '6p', '6d'],
-                ['7s', '7p']]
-    const orbitNum = [2, 2, 6, 2, 6, 10, 2, 6, 10, 2, 6,
-                      14, 10, 2, 6, 2, 14, 10, 6, 2];
-
-
-    this.labGuide = LabGuide;
+    this.camera = labScene.camera;
+    this.scene = labScene.scene;
+    this.renderer = labScene.renderer;
     this.labScene = labScene;
+
     const dataRetriever = new DataRetriever();
     const elementTools = new ElementTools();
     const eventListener = new PtEventListener();
+    const previewPanelSize = 200;
     var scope = this;
 
     //Enable Element view
     this.ptEnabled = false;
 
+    var elementTable, previewPanel;
     var container, stats, raycaster, meshArr = []; // Array to hold all meshes that needs disposing
     var currentCamera, defaultCamera, currentScene, currentRenderer, currentControls, defaultControls, currentRaycastTarget;
     var tableScene, tableRenderer;
-    var mouse = new THREE.Vector2(), previewMouse = new THREE.Vector2(),
+    var currentMouse,
     INTERSECTED;
     // var data = require('./data')
 
@@ -47,14 +41,6 @@ PeriodicTable = function(labGuide, labScene) {
     const elementTextGridSize = 0.8;
     var fontUrl = "fonts/helvetiker_bold.typeface.json";
     var firstSize = 0.8, secondSize = 0.3, thirdSize = 0.25, fourthSize = 0.15;
-
-    // Build preview panel for element data preview
-    var previewPanelSize = 200;
-    var previewPanel = document.createElement('div');
-    previewPanel.setAttribute('id', 'preview-panel');
-    previewPanel.style.width = previewPanelSize + 'px';
-    previewPanel.style.height = previewPanelSize + 'px';
-    previewPanel.style.opacity = 0;
 
       // Build data screen
     var elementCamera, elementScene, elementRenderer, elementControls; // Camera, scene, renderer & controls for element model
@@ -87,7 +73,7 @@ PeriodicTable = function(labGuide, labScene) {
         // currentCamera = defaultCamera;
 
         //Init for periodic table scene as the default scene
-        currentScene = scope.labScene.scene;
+        raycaster = new THREE.Raycaster();
 
         // tableRenderer = new THREE.WebGLRenderer();
         // tableRenderer.setPixelRatio(window.devicePixelRatio);
@@ -107,13 +93,13 @@ PeriodicTable = function(labGuide, labScene) {
         });
         var boxTable = new THREE.Mesh(geo, mat);
         boxTable.name = 'periodic-table';
-        var elementTable = getElementGrid(demoTable);
+        elementTable = getElementGrid(demoTable);
         elementTable.add(boxTable);
         scope.labScene.add(elementTable);
         boxTable.position.set(0, 0, 10);
         boxTable.rotation.y = -Math.PI / 2;
         elementTable.scale.set(0.5, 0.5, 0.4);
-        elementTable.position.set(49, 35, -25)
+        elementTable.position.set(49, 30, -25)
         elementTable.rotation.y = -Math.PI / 2;
         elementTable.name = 'element-table';
         scope.labScene.previewInfo['element-table'] = {
@@ -121,113 +107,30 @@ PeriodicTable = function(labGuide, labScene) {
             desc: "A periodic board with info about 118 elements. Super helpful!"
         };
 
-        var boundingBox = new THREE.Box3().setFromObject(boxTable);
+        var boundingBox = new THREE.Box3().setFromObject(elementTable);
         var helper = new THREE.Box3Helper(boundingBox, 0x1A1A1A);
         helper.material.transparent = true;
         helper.material.opacity = 0;
-        helper.name = "periodic-table-helper";
+        helper.name = "element-table-helper";
         scope.labScene.add(helper);
 
         scope.labScene.raycastTarget.push(boxTable);
-        // elementTable.add(getElementGrid(demoTable));
-        // scope.labScene.add(elementTable);
-        // elementTable.position.set(49, 35, -25);
-        // elementTable.rotation.y = -Math.PI / 2;
-        // elementTable.name = 'periodic-table';
-        // elementTable.scale.set(0.5, 0.5, 0.45);
-        // scope.labScene.previewInfo['periodic-table'] = {
-        //     name: "Periodic Table",
-        //     desc: "A periodic table with info about 118 elements. Super helpful!"
-        // };
-        //
-        // var boundingBox = new THREE.Box3().setFromObject(elementTable);
-        // var helper = new THREE.Box3Helper(boundingBox, 0x1A1A1A);
-        // helper.material.transparent = true;
-        // helper.material.opacity = 0;
-        // helper.name = "periodic-table-helper";
-        // scope.labScene.add(helper);
-        //
-        // scope.labScene.raycastTarget.push(elementTable);
+        currentRaycastTarget = periodicTable;
+        currentCamera = scope.camera;
+        currentScene = scope.scene;
+        currentRenderer = scope.renderer;
 
-        // // Init controls for periodic table scene (also the default controls)
-        // defaultControls = new THREE.OrbitControls(defaultCamera, tableRenderer.domElement);
-        // defaultControls.enableDamping = true;
-        // defaultControls.dampingFactor = 0.1;
-        // defaultControls.rotateSpeed = 0.25;
-        // defaultControls.zoomSpeed = 5;
-        // defaultControls.minDistance = 10;
-        // defaultControls.maxDistance = 60;
-        // defaultControls.maxPolarAngle = Math.PI * 5 / 6;
-        // defaultControls.minPolarAngle = Math.PI / 6;
-        // defaultControls.maxAzimuthAngle = Math.PI / 4;
-        // defaultControls.minAzimuthAngle = -Math.PI / 4;
-        // defaultControls.enablePan = false;
-        // defaultControls.target.set(0, 0, -50);
-        // currentControls = defaultControls;
-        //
-        // // Init for element detail data screen
-        // // with different camera, scene, renderer and controls
-        // elementCamera = new THREE.PerspectiveCamera(
-        //     70,
-        //     window.innerWidth / window.innerHeight,
-        //     1,
-        //     1000
-        // );
-        // elementCamera.position.z = 50;
-        // elementCamera.lookAt(new THREE.Vector3(0, 0, 0));
-        //
-        // elementScene = new THREE.Scene();
-        //
-        // elementRenderer = new THREE.WebGLRenderer();
-        // elementRenderer.setSize(window.innerWidth, window.innerHeight);
-        // elementRenderer.setPixelRatio(window.devicePixelRatio);
-        // elementRenderer.setClearColor(0xecf0f1, 1);
-        // var erContainer = document.createElement('div'); // Element Renderer Container
-        // erContainer.setAttribute('id', 'ds-er-container');
-        // erContainer.appendChild(elementRenderer.domElement);
-        // dataScreen.appendChild(erContainer);
-        //
-        // elementControls = new THREE.TrackballControls(elementCamera, elementRenderer.domElement);
-        // elementControls.enableDamping = true;
-        // elementControls.dampingFactor = 0.2; //give a sense of weight to the control
-        // elementControls.rotateSpeed = 2;
-        // elementControls.zoomSpeed = 5;
-        // elementControls.minDistance = 20;
-        // elementControls.maxDistance = 80;
-        // elementControls.noPan = true;
-        //
-        // var spotLightGroup = new THREE.Group();
-        //
-        // var spotLight1 = new THREE.SpotLight(0xF2F2F2);
-        // spotLight1.position.set(0, 0, 10);
-        // spotLight1.penumbra = 1;
-        // spotLight1.lookAt = new THREE.Vector3(0, 0, 0);
-        // spotLight1.castShadow = true;
-        // spotLight1.intensity = 1;
-        // spotLight1.name = 'spotLight1';
-        //
-        // var spotLight2 = new THREE.SpotLight(0xF2F2F2);
-        // spotLight2.position.set(0, 0, -10);
-        // spotLight2.penumbra = 1;
-        // spotLight2.lookAt = new THREE.Vector3(0, 0, 0);
-        // spotLight2.castShadow = true;
-        // spotLight2.intensity = 1;
-        // spotLight2.name = 'spotLight2';
-        //
-        // elementScene.add(spotLight1);
-        // elementScene.add(spotLight2);
-        //
-        // // Performance Stats
-        // // stats = new Stats();
-        // // container.appendChild(stats.dom);
-        //
+        //First initializing for preview panel
+        previewPanel = document.getElementById('preview-panel');
+        previewPanel.style.width = previewPanelSize + 'px';
+        previewPanel.style.height = previewPanelSize + 'px';
+        previewPanel.style.opacity = 0;
+
         // //BGM - .mp3 only
         // // loadBGM('sound.mp3');
 
         // Add listeners
         document.addEventListener('click', onTableBoxClick, false);
-
-        document.addEventListener('mousemove', onDocumentMouseMove, false);
         window.addEventListener('resize', onWindowResize, false);
 
         // document.getElementById('ds-close-button').addEventListener('click', onElementModelCloseButtonClick, false);
@@ -257,18 +160,6 @@ PeriodicTable = function(labGuide, labScene) {
         currentCamera.aspect = window.innerWidth / window.innerHeight;
         currentCamera.updateProjectionMatrix();
         currentRenderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    function onDocumentMouseMove(event) {
-        event.preventDefault();
-
-        var filterCtrlHeight = $('#filter-controller').outerHeight(true);
-
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -((event.clientY - filterCtrlHeight) / window.innerHeight) * 2 + 1;
-
-        previewMouse.x = event.clientX;
-        previewMouse.y = event.clientY - filterCtrlHeight;
     }
 
     function addColAndCloseBtn() {
@@ -411,16 +302,23 @@ PeriodicTable = function(labGuide, labScene) {
         var eConfig = elementTools.calcElectronConf(z, element.eConf);
 
         var newPos = {x: 0, y: 0};
-        newPos.x = previewMouse.x + offset;
-        newPos.y = previewMouse.y + offset;
+        newPos.x = (currentMouse.x + 1) / 2 * width;
+        newPos.y = -(currentMouse.y - 1) / 2 * height;
+
+
+        //need extra steps to convert p2D to window's coordinates
+        // p2D.x = (p2D.x + 1)/2 * width;
+        // p2D.y = - (p2D.y - 1)/2 * height;
+
+        // console.log(currentMouse.x, currentMouse.y);
 
         // Check for overflow
-        if (newPos.x + size >= width ) {
-            newPos.x = width - size - 10;
-        }
-        if (newPos.y + size >= height) {
-            newPos.y = height - size - 10;
-        }
+        // if (newPos.x + size >= width ) {
+        //     newPos.x = width - size - 10;
+        // }
+        // if (newPos.y + size >= height) {
+        //     newPos.y = height - size - 10;
+        // }
 
         previewPanel.innerHTML = `
             <h2>${element.z} - ${element.name}</h2>
@@ -718,48 +616,46 @@ PeriodicTable = function(labGuide, labScene) {
         return group;
     }
 
-    this.update = function() {
-
+    this.setMouse = function (mouseFromRaycast) {
+        currentMouse = mouseFromRaycast;
     }
 
+    this.switchOnOff = function() {
+        ptEnabled == true ? false : true;
+    }
 
-    // function animate() {
-    //     requestAnimationFrame(animate);
-    //     render();
-    // }
-    //
-    // function render() {
-    //     // find intersections
-    //     if (currentRaycastTarget) {
-    //         raycaster.setFromCamera(mouse, currentCamera);
-    //         var intersects = raycaster.intersectObjects(currentRaycastTarget);
-    //         if (intersects.length > 0) {
-    //             if (INTERSECTED != intersects[0].object) {
-    //                 if (INTERSECTED) {
-    //                     INTERSECTED.children[0].material.opacity = 0.25;
-    //                     document.body.style.cursor = "auto";
-    //                     hidePreviewPanel();
-    //                 }
-    //
-    //                 INTERSECTED = intersects[0].object;
-    //                 INTERSECTED.children[0].material.opacity = 1;
-    //                 document.body.style.cursor = "pointer";
-    //                 getPreviewPanel(INTERSECTED.name.slice(3));
-    //             }
-    //         } else {
-    //             if (INTERSECTED) {
-    //                 INTERSECTED.children[0].material.opacity = 0.25;
-    //                 document.body.style.cursor = "auto";
-    //                 hidePreviewPanel();
-    //             }
-    //
-    //             INTERSECTED = null;
-    //         }
-    //     }
-    //
-    //     // stats.update();
-    //     currentControls.update();
-    //     TWEEN.update();
-    //     currentRenderer.render(currentScene, currentCamera);
-    // }
+    this.update = function() {
+        //find intersections
+            if (currentRaycastTarget) {
+                raycaster.setFromCamera(currentMouse, currentCamera);
+                var intersects = raycaster.intersectObjects(currentRaycastTarget);
+                if (intersects.length > 0) {
+                    if (INTERSECTED != intersects[0].object) {
+                        if (INTERSECTED) {
+                            INTERSECTED.children[0].material.opacity = 0.25;
+                            document.body.style.cursor = "auto";
+                            hidePreviewPanel();
+                        }
+
+                        INTERSECTED = intersects[0].object;
+                        INTERSECTED.children[0].material.opacity = 1;
+                        document.body.style.cursor = "pointer";
+
+                        getPreviewPanel(INTERSECTED.name.slice(3));
+                    }
+                } else {
+                    if (INTERSECTED) {
+                        INTERSECTED.children[0].material.opacity = 0.25;
+                        document.body.style.cursor = "auto";
+                        hidePreviewPanel();
+                    }
+
+                    INTERSECTED = null;
+                }
+            }
+
+            // stats.update();
+            // currentRenderer.render(currentScene, currentCamera);
+    }
+
 }

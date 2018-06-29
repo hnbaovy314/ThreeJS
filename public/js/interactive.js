@@ -90,6 +90,7 @@ Raycaster = function(gui, controls, labScene, labGuide) {
     var scope = this;
 
     var mouse = new THREE.Vector2(), infoMouse = new THREE.Vector2();
+    this.mouseraycast = mouse;
 
     var infoPanel = document.getElementById("info-panel");
 

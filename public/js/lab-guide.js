@@ -166,10 +166,17 @@ LabGuide = function(gui, controls, labScene) {
         scope.raycaster.update();
         scope.unitLoop.update();
         controls.update();
+
+        if (scope.labScene.periodicTable.ptEnabled == true) {
+            scope.labScene.periodicTable.setMouse(scope.raycaster.mouseraycast);
+            scope.labScene.periodicTable.update();
+        }
     }
 
     // Move to experiment desk position
     this.moveToDesk = function() {
+        scope.labScene.periodicTable.ptEnabled = false;
+
         new TWEEN.Tween(scope.controls.target)
         .to({x: -25.01, y: 27.5, z: -27}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
@@ -183,6 +190,8 @@ LabGuide = function(gui, controls, labScene) {
 
     // Bring up the guide tab
     this.bringUpGuideTab = function() {
+        scope.labScene.periodicTable.ptEnabled = false;
+
         new TWEEN.Tween(scope.raycaster.INTERSECTED.rotation)
         .to({x: 0, y: 0, z: 0}, 300)
         .easing(TWEEN.Easing.Quadratic.InOut)
@@ -207,6 +216,9 @@ LabGuide = function(gui, controls, labScene) {
     // Turn off the guide tab
     this.turnOffGuideTab = function(event) {
         event.preventDefault();
+        if (scope.raycaster.currentPos == "element-table"){
+            scope.labScene.periodicTable.ptEnabled = true;
+        }
 
         document.getElementById("guide-tab").style.visibility = "hidden";
         document.getElementById("guide-tab").style.opacity = 0;
@@ -231,6 +243,8 @@ LabGuide = function(gui, controls, labScene) {
 
      // Move to window position
     this.moveToWindow = function() {
+        scope.labScene.periodicTable.ptEnabled = false;
+
         new TWEEN.Tween(scope.controls.target)
         .to({x: 0, y: 30, z: 42.51}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
@@ -243,20 +257,17 @@ LabGuide = function(gui, controls, labScene) {
     }
 
     this.moveToPeriodicTable = function() {
+        scope.labScene.periodicTable.ptEnabled = true;
+
         new TWEEN.Tween(scope.controls.target)
-        .to({x: 49, y: 35, z: -25}, 500)
+        .to({x: 49, y: 30, z: -25}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
 
         new TWEEN.Tween(scope.labScene.camera.position)
-        .to({x: 25, y: 35, z:-25}, 500)
+        .to({x: 24, y: 30, z:-25}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
-
-        // new TWEEN.Tween(scope.labScene.camera.rotation)
-        // .to({y: Math.PI/2}, 500)
-        // .easing(TWEEN.Easing.Quadratic.InOut)
-        // .start();
     }
 
     // Internals

@@ -1,4 +1,6 @@
 ElementTools = function () {
+    const orbit = ['1s', '2s', '2p', '3s', '3p', '3d', '4s', '4p', '4d', '4f', '5s', '5p',
+                '5d', '5f', '6s', '6p', '6d', '7s', '7p'];
     const dataRetriever = new DataRetriever();
 
     this.clearDiv = function(divId) {
