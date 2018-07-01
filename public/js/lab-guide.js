@@ -26,6 +26,7 @@ LabGuide = function(gui, labScene) {
 
         scope.animation.init();
         scope.lessons.init();
+        scope.labScene.periodicTable.init(scope);
 
         document.addEventListener('mousemove', onDocumentMouseMove, false);
         document.addEventListener('mousedown', onDocumentMouseDown, false);
@@ -196,46 +197,69 @@ LabGuide = function(gui, labScene) {
 
     // Bring up the guide tab
     this.bringUpGuideTab = function() {
-        scope.labScene.periodicTable.ptEnabled = false;
+        var tablet = scope.labScene.camera.children[0];
 
-        new TWEEN.Tween(INTERSECTED.rotation)
+        new TWEEN.Tween(tablet.rotation)
         .to({x: 0, y: 0, z: 0}, 300)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
 
-        new TWEEN.Tween(INTERSECTED.position)
+        new TWEEN.Tween(tablet.position)
         .to({x: -3.29, y: 0.5, z: -1.75}, 300)
         .easing(TWEEN.Easing.Quadratic.InOut)
+        .start()
         .onComplete(function() {
             document.getElementById("guide-tab").style.visibility = "visible";
             document.getElementById("guide-tab").style.opacity = 1;
             document.getElementById("guide-tab").style.pointerEvents = "auto";
-        })
-        .start();
 
-        INTERSECTED.parent.children[1].visible = false;
+            tablet.parent.children[1].visible = false;
 
-        guideLock = true;
+            guideLock = true;
+            if (scope.labScene.periodicTable.secondSetEnabled) {
+                setTimeout(function() {
+                    scope.labScene.periodicTable.switch2Local();
+                    scope.labScene.periodicTable.loadElementInfo();
+                }, 100);
+                // scope.labScene.periodicTable.switch2Local();
+                // scope.labScene.periodicTable.loadElementInfo();
+                return;
+            }
+        });
+
+        //get hand
+
         scope.lessons.checkNextStep();
     }
 
     // Turn off the guide tab
     this.turnOffGuideTab = function(event) {
         event.preventDefault();
-        if (scope.currentPos == "element-table"){
+
+        if (scope.labScene.periodicTable.secondSetEnabled) {
+            scope.labScene.periodicTable.secondSetEnabled = false;
             scope.labScene.periodicTable.ptEnabled = true;
+            scope.labScene.periodicTable.eScreenOn = false;
+            // setTimeout(function() {
+            //     scope.labScene.periodicTable.switch2Default();
+            // }, 200);
+            scope.labScene.periodicTable.switch2Default();
+            // scope.labScene.periodicTable.destroyElementModel();
+            // scope.labScene.periodicTable.elementTools.clearDiv('gtab-content');
         }
 
         document.getElementById("guide-tab").style.visibility = "hidden";
         document.getElementById("guide-tab").style.opacity = 0;
         document.getElementById("guide-tab").style.pointerEvents = "none";
 
-        new TWEEN.Tween(INTERSECTED.rotation)
+        var tablet = scope.labScene.camera.children[0];
+
+        new TWEEN.Tween(tablet.rotation)
         .to({x: -0.5, y: 0, z: 0.05}, 300)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
 
-        new TWEEN.Tween(INTERSECTED.position)
+        new TWEEN.Tween(tablet.position)
         .to({x: -4.5, y: -2.2, z: -3}, 300)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
@@ -399,26 +423,31 @@ LabGuide = function(gui, labScene) {
         if (INTERSECTED && INTERSECTED.name != scope.currentPos) {
             switch(INTERSECTED.name) {
                 case "guide-tab": {
+                    console.log(scope.currentPos);
                     scope.prevPos = scope.currentPos;
                     scope.currentPos = "guide-tab";
                     hideInfoPanel();
                     scope.bringUpGuideTab();
+                    scope.labScene.periodicTable.ptEnabled = false;
                     break;
                 }
                 case "window": {
                     scope.currentPos = "window";
                     hideInfoPanel();
                     scope.moveToWindow();
+                    scope.labScene.periodicTable.ptEnabled = false;
                     break;
                 }
                 case "lab-desk": {
                     scope.currentPos = "lab-desk";
                     hideInfoPanel();
                     scope.moveToDesk();
+                    scope.labScene.periodicTable.ptEnabled = false;
                     break;
                 }
                 case "element-table": {
                     scope.currentPos = "element-table";
+                    scope.labScene.periodicTable.ptEnabled = true;
                     hideInfoPanel();
                     scope.moveToPeriodicTable();
                     break;
@@ -466,6 +495,16 @@ LabGuide = function(gui, labScene) {
             <p>${scope.labScene.previewInfo[INTERSECTED.name].desc}</p>`;
         infoPanel.style.transform = 'translate(' + newPos.x + 'px, ' + newPos.y + 'px)';
         infoPanel.style.opacity = 1;
+    }
+
+    //handle element box click
+    function onElementClick(event) {
+        hideInfoPanel();
+        scope.prevPos = scope.currentPos;
+        scope.currentPos = "guide-tab";
+        scope.labScene.periodicTable.eInfoEnabled = true;
+        scope.bringUpGuideTab();
+        scope.labScene.periodicTable.onTableBoxClick(event);
     }
 
     // Hide element preview data panel

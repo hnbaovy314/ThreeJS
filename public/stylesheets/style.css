@@ -35,20 +35,8 @@ h1, h2 {
     line-height: 1.5;
 }
 
-#data-screen {
-    position: absolute;
-    top: 100vh;
-    left: 0;
-    margin: 0;
-    padding: 0;
-    opacity: 0;
-    width: 100vw;
-    height: 100vh;
-    transition: all 0.3s ease-out;
-}
-
 /* CSS for Data Screen */
-#data-screen #ds-close-button {
+#ds-close-button {
     position: absolute;
     top: 20px;
     right: 20px;
@@ -64,11 +52,11 @@ h1, h2 {
     height: 20px;
 }
 
-#data-screen #ds-close-button:hover {
+#ds-close-button:hover {
     background: #1A1A1A;
 }
 
-#data-screen #ds-close-button b {
+#ds-close-button b {
     display: block;
     position: absolute;
     height: 0;
@@ -78,53 +66,29 @@ h1, h2 {
     border: solid 10px rgba(242, 242, 242, 0);
 }
 
-#data-screen #ds-close-button b:nth-child(1){
+#ds-close-button b:nth-child(1){
     border-top-color: #F2F2F2;
     top: -2px;
 }
-#data-screen #ds-close-button b:nth-child(2){
+#ds-close-button b:nth-child(2){
     border-left-color: #F2F2F2;
     left: -2px;
 }
-#data-screen #ds-close-button b:nth-child(3){
+#ds-close-button b:nth-child(3){
     border-bottom-color: #F2F2F2;
     bottom: -2px;
 }
-#data-screen #ds-close-button b:nth-child(4){
+#ds-close-button b:nth-child(4){
     border-right-color: #F2F2F2;
     right: -2px;
-}
-
-#data-screen #ds-left-column {
-    margin: 0;
-    position: absolute;
-    top: 0;
-    width: 20vw;
-    height: 100vh;
-}
-
-#data-screen #ds-right-column {
-    margin: 0;
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 20vw;
-    height: 100vh;
-}
-
-#data-screen #ds-er-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: -1;
 }
 
 /* Guide Tab */
 #guide-tab {
     position: absolute;
-    width: 1050px;
-    height: 710px;
-    top: 115px;
+    width: 62vw;
+    height: 75vh;
+    top: 11vh;
     left: 0;
     right: 0;
     margin-left: auto;
@@ -160,6 +124,12 @@ h1, h2 {
 #guide-tab #gtab-back-to-scene:hover {
     color: rgba(255,255,255, 0.5);
     cursor: pointer;
+}
+
+#guide-tab #gtab-content {
+    width: 100%;
+    height: 80%;
+    top: 20%;
 }
 
 #guide-tab #gtab-content-body {
@@ -336,33 +306,37 @@ h1, h2 {
     margin: 0 auto;
 }
 
-#data-screen #ds-left-column {
+#gtab-content #ds-left-column {
     margin: 0;
     position: absolute;
-    top: 0;
-    width: 25%;
-    height: 100vh;
+    top: 9.5%;
+    width: 30%;
+    height: 90%;
     border-style: solid;
     border-width: 2px;
     border-color: #2c3e50;
     background-color: #ecf0f1;
     color: #2c3e50;
-    font-size: 15px;
+    font-size: 12px;
 }
 
-#data-screen #ds-er-container {
+#ds-er-container {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 10%;
+    left: 30%;
     z-index: -1;
+    width: 70%;
+    height: 90%;
 }
 
-#data-screen #ds-left-column #left-main-info {
+#ds-left-column #left-main-info {
+    width: 100%;
     height: 45%;
 }
 
-#left-sub-info {
+#ds-left-column #left-sub-info {
     border-style: hidden;
+    width: 100%;
     height: 45%;
 }
 
@@ -434,7 +408,7 @@ h1, h2 {
 }
 
 #left-sub-info .text-wrapper p{
-    height: 90%;
+    height: 80%;
     color: #2c3e50;
     overflow: scroll;
 }

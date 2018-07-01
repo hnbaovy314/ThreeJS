@@ -115,8 +115,8 @@ ElementTools = function () {
         orbit.name = 'electron-orbit';
         orbitContainer.add(orbit);
 
-        meshArr.push(line);
-        meshArr.push(electronMesh);
+        // meshArr.push(line);
+        // meshArr.push(electronMesh);
 
         return orbitContainer;
     }

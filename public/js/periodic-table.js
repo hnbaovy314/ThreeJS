@@ -12,19 +12,22 @@ PeriodicTable = function(labScene) {
         [0, 0, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 0]
     ];
 
-    this.camera = labScene.camera;
-    this.scene = labScene.scene;
-    this.renderer = labScene.renderer;
     this.labScene = labScene;
 
     const dataRetriever = new DataRetriever();
     const elementTools = new ElementTools();
     const eventListener = new PtEventListener();
     const previewPanelSize = 200;
+    const elementCanvasWidth = window.innerWidth*0.62*0.7;
+    const elementCanvasHeight = window.innerHeight*0.75*0.9
     var scope = this;
 
     //Enable Element view
     this.ptEnabled = false;
+    this.secondSetEnabled = false;
+    this.eScreenOn = false;
+    this.intersectElement = 0;
+    var elementScene, elementRenderer, elementCamera, elementControl;
 
     var elementTable, previewPanel;
     var container, stats, raycaster, meshArr = []; // Array to hold all meshes that needs disposing
@@ -42,14 +45,9 @@ PeriodicTable = function(labScene) {
     var fontUrl = "fonts/helvetiker_bold.typeface.json";
     var firstSize = 0.8, secondSize = 0.3, thirdSize = 0.25, fourthSize = 0.15;
 
-      // Build data screen
-    var elementCamera, elementScene, elementRenderer, elementControls; // Camera, scene, renderer & controls for element model
-    var dataScreen = document.createElement('div');
-    dataScreen.setAttribute('id', 'data-screen');
-
     var elements = dataRetriever.getAllElements();
 
-    this.init = function() {
+    this.init = function(labGuide) {
         // container = document.createElement('div');
         // container.setAttribute('id', 'periodic-container');
         // document.body.appendChild(container);
@@ -58,6 +56,7 @@ PeriodicTable = function(labScene) {
 
         //Element Model
         calcEPerShell();
+        scope.labGuide = labGuide;
         for (var i=0; i < elements.length; i++){
             elements[i].eConf = make1DArray(elements[i].eConf);
         }
@@ -94,9 +93,11 @@ PeriodicTable = function(labScene) {
 
         scope.labScene.raycastTarget.push(boxTable);
         currentRaycastTarget = periodicTable;
-        currentCamera = scope.camera;
-        currentScene = scope.scene;
-        currentRenderer = scope.renderer;
+        //get the default setting
+        currentCamera = scope.labScene.camera;
+        currentScene = scope.labScene.scene;
+        currentRenderer = scope.labScene.renderer;
+        currentControl = scope.labScene.controls;
 
         //First initializing for preview panel
         previewPanel = document.getElementById('preview-panel');
@@ -106,6 +107,49 @@ PeriodicTable = function(labScene) {
 
         // //BGM - .mp3 only
         // // loadBGM('sound.mp3');
+
+        //Element Scene
+        elementScene = new THREE.Scene();
+        elementRenderer = new THREE.WebGLRenderer();
+        elementCamera = new THREE.PerspectiveCamera(
+            70,
+            elementCanvasWidth / elementCanvasHeight,
+            1,
+            1000
+        );
+        elementCamera.position.z = 50;
+        elementCamera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        elementRenderer.setPixelRatio(window.devicePixelRatio);
+        elementRenderer.setClearColor(0xecf0f1, 1);
+
+        var spotLight1 = new THREE.SpotLight(0xF2F2F2);
+        spotLight1.position.set(0, 0, 10);
+        spotLight1.penumbra = 1;
+        spotLight1.lookAt = new THREE.Vector3(0, 0, 0);
+        spotLight1.castShadow = true;
+        spotLight1.intensity = 1;
+        spotLight1.name = 'spotLight1';
+
+        var spotLight2 = new THREE.SpotLight(0xF2F2F2);
+        spotLight2.position.set(0, 0, -10);
+        spotLight2.penumbra = 1;
+        spotLight2.lookAt = new THREE.Vector3(0, 0, 0);
+        spotLight2.castShadow = true;
+        spotLight2.intensity = 1;
+        spotLight2.name = 'spotLight2';
+
+        elementScene.add(spotLight1);
+        elementScene.add(spotLight2);
+
+        elementControl = new THREE.TrackballControls(elementCamera, elementRenderer.domElement);
+        elementControl.enableDamping = true;
+        elementControl.dampingFactor = 0.2; //give a sense of weight to the control
+        elementControl.rotateSpeed = 2;
+        elementControl.zoomSpeed = 5;
+        elementControl.minDistance = 20;
+        elementControl.maxDistance = 80;
+        elementControl.noPan = true;
 
         // Add listeners
         document.addEventListener('click', onTableBoxClick, false);
@@ -140,8 +184,9 @@ PeriodicTable = function(labScene) {
         currentRenderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    function addColAndCloseBtn() {
+    function addColumn(divId) {
         // Add left and right column
+        var mainDiv = document.getElementById(divId);
         var newElement = document.createElement('div');
         var subInfo = document.createElement('div');
         var infoText = document.createElement('div');
@@ -170,15 +215,36 @@ PeriodicTable = function(labScene) {
 
         newElement.appendChild(subBtn);
         newElement.appendChild(subInfo);
-        dataScreen.appendChild(newElement);
-        // Add close button
-        var newElement = document.createElement('div');
-        newElement.setAttribute('id', 'ds-close-button');
-        newElement.appendChild(document.createElement('b'));
-        newElement.appendChild(document.createElement('b'));
-        newElement.appendChild(document.createElement('b'));
-        newElement.appendChild(document.createElement('b'));
-        dataScreen.appendChild(newElement);
+        mainDiv.appendChild(newElement);
+    }
+
+    function foo() {
+        return new Promise (function(resolve, reject){
+            scope.labGuide.bringUpGuideTab();
+            return resolve(true);
+        })
+    }
+
+    this.switch2Default = function() {
+        scope.labScene.camera = currentCamera;
+        scope.labScene.scene = currentScene;
+        scope.labScene.controls = currentControl;
+        scope.labScene.renderer = currentRenderer;
+    }
+
+    this.switch2Local = function() {
+        currentCamera = scope.labScene.camera;
+        currentScene = scope.labScene.scene;
+        currentControl = scope.labScene.controls;
+        currentRenderer = scope.labScene.renderer;
+        scope.labScene.camera = elementCamera;
+        scope.labScene.scene = elementScene;
+        scope.labScene.controls = elementControl;
+        scope.labScene.renderer = elementRenderer;
+    }
+
+    this.add2LocalCamera = function(object) {
+        elementCamera.add(object);
     }
 
     // Listening for click event, combining with the INTERSECTED
@@ -187,57 +253,61 @@ PeriodicTable = function(labScene) {
     function onTableBoxClick(event) {
         event.preventDefault();
 
-        if (INTERSECTED) {
-            currentControls.reset();
-            currentControls.update();
-
-            // Return the raycast, INTERSECTED and preview panel to clean state
-            currentRaycastTarget = null;
-            INTERSECTED.children[0].material.opacity = 0.25;
-            var atomicNumber = INTERSECTED.name.slice(3);
-            var element = elements[atomicNumber-1];
-            INTERSECTED = null;
-            hidePreviewPanel();
-            document.body.style.cursor = "auto";
-
-            dataScreen.style.transform = 'translateY(-100vh)';
-            dataScreen.style.opacity = 1;
-
-            getElementModel(atomicNumber);
-
-            var infoPanelWidth = ($('#ds-left-column').outerWidth(true)/window.innerHeight)*2+1;
-            // Switch to element model camera, scene & ...
-            currentCamera = elementCamera;
-            currentScene = elementScene;
-            currentRenderer = elementRenderer;
-
-            currentScene.position.x += infoPanelWidth;
-            currentCamera.position.x += infoPanelWidth;
-
-            currentControls = elementControls;
-            currentCamera.position.z = 60;
-            var element = elements[atomicNumber-1];
-            var eConfig = elementTools.calcElectronConf(atomicNumber, element.eConf);
-            var cat = dataRetriever.getCat(element.cat);
-            getElementInfo(element, 'left-info-text', eConfig, cat);
-            elementTools.getElementImg('left-sub-info', atomicNumber);
-            $('#infoBtn0').addClass('infoBtn-focus');
-            $('#infoBtn0').on('click', function() {
-                eventListener.infoTabClick('infoBtn0')
-                eventListener.onElementImg(atomicNumber, 'left-sub-info');
-            });
-            $('#infoBtn1').on('click', function() {
-                eventListener.infoTabClick('infoBtn1');
-                eventListener.onCrystalStructure(element.crystalStructure, 'left-sub-info');
-            });
-            $('#infoBtn2').on('click', function() {
-                eventListener.infoTabClick('infoBtn2');
-                eventListener.onCategories(cat, 'left-sub-info');
-            })
-            $('#infoBtn3').on('click', function() {
-                var wnd = window.open(`https://en.wikipedia.org/wiki/${element.name}`);
-            });
+        if (INTERSECTED ) {
+            // currentControls.reset();
+            // currentControls.update();
+            scope.secondSetEnabled = true;
+            scope.labGuide.prevPos = scope.labGuide.currentPos;
+            scope.ptEnabled = false;
+            scope.labGuide.currentPos = 'guide-tab';
+            scope.labGuide.bringUpGuideTab();
+            $('#gtab-content').innerHTML = '';
         }
+    }
+
+    this.loadElementInfo = function() {
+        var infoTabContent = document.getElementById('gtab-content');
+        infoTabContent.innerHTML = '';
+        addColumn('gtab-content');
+        var erContainer = document.createElement('div'); // Element Renderer Container
+        erContainer.setAttribute('id', 'ds-er-container');
+        erContainer.appendChild(elementRenderer.domElement);
+        infoTabContent.appendChild(erContainer);
+        elementRenderer.setSize(elementCanvasWidth, elementCanvasHeight);
+
+        currentRaycastTarget = null;
+        // INTERSECTED.children[0].material.opacity = 0.25;
+        var atomicNumber = INTERSECTED.name.slice(3);
+        var element = elements[atomicNumber-1];
+        INTERSECTED = null;
+        hidePreviewPanel();
+        document.body.style.cursor = "auto";
+
+        var eModel = getElementModel(atomicNumber);
+        elementScene.add(eModel);
+        eModel.position.set(0, 0, 0);
+
+        var element = elements[atomicNumber-1];
+        var eConfig = elementTools.calcElectronConf(atomicNumber, element.eConf);
+        var cat = dataRetriever.getCat(element.cat);
+        getElementInfo(element, 'left-info-text', eConfig, cat);
+        elementTools.getElementImg('left-sub-info', atomicNumber);
+        $('#infoBtn0').addClass('infoBtn-focus');
+        $('#infoBtn0').on('click', function() {
+            eventListener.infoTabClick('infoBtn0')
+            eventListener.onElementImg(atomicNumber, 'left-sub-info');
+        });
+        $('#infoBtn1').on('click', function() {
+            eventListener.infoTabClick('infoBtn1');
+            eventListener.onCrystalStructure(element.crystalStructure, 'left-sub-info');
+        });
+        $('#infoBtn2').on('click', function() {
+            eventListener.infoTabClick('infoBtn2');
+            eventListener.onCategories(cat, 'left-sub-info');
+        })
+        $('#infoBtn3').on('click', function() {
+            var wnd = window.open(`https://en.wikipedia.org/wiki/${element.name}`);
+        });
     }
 
     // Listening for click event on the element model panel close button
@@ -307,7 +377,6 @@ PeriodicTable = function(labScene) {
             <h1 class="symbol">${element.symbol}</h1>`;
         previewPanel.style.transform = 'translate(' + newPos.x + 'px, ' + newPos.y + 'px)';
         previewPanel.style.opacity = 1;
-
     }
 
     // Hide element preview data panel
@@ -399,7 +468,7 @@ PeriodicTable = function(labScene) {
         meshArr.push(outerMesh);
 
         group.name = "Element Model";
-        elementScene.add(group);
+        return group;
 
         // var eGroup = elementScene.getObjectByName('Electron group');
     }
@@ -428,6 +497,7 @@ PeriodicTable = function(labScene) {
             author = author.concat(element.discovery.by[i]);
         }
 
+        infoText.innerHTML = '';
         infoText.innerHTML =
         `<h2>${element.z} - ${element.name}</h2>
         <ul>
@@ -449,7 +519,7 @@ PeriodicTable = function(labScene) {
         })
     }
 
-    function destroyElementModel() {
+    this.destroyElementModel = function() {
         var elementModel = elementScene.getObjectByName('Element Model');
         var eGroup = elementScene.getObjectByName('Electron group');
 
@@ -461,13 +531,6 @@ PeriodicTable = function(labScene) {
             elementScene.remove(elementModel.children[i]);
         }
         elementScene.remove(elementModel);
-
-        for (var i = 0; i < meshArr.length; i++) {
-            meshArr[i].geometry.dispose();
-            meshArr[i].material.dispose();
-        }
-
-        meshArr = [];
     }
 
     // Get individual element
@@ -598,42 +661,36 @@ PeriodicTable = function(labScene) {
         currentMouse = mouseFromRaycast;
     }
 
-    this.switchOnOff = function() {
-        ptEnabled == true ? false : true;
-    }
-
     this.update = function() {
         //find intersections
-            if (currentRaycastTarget) {
-                raycaster.setFromCamera(currentMouse, currentCamera);
-                var intersects = raycaster.intersectObjects(currentRaycastTarget);
-                if (intersects.length > 0) {
-                    if (INTERSECTED != intersects[0].object) {
-                        if (INTERSECTED) {
-                            INTERSECTED.children[0].material.opacity = 0.25;
-                            document.body.style.cursor = "auto";
-                            hidePreviewPanel();
-                        }
-
-                        INTERSECTED = intersects[0].object;
-                        INTERSECTED.children[0].material.opacity = 1;
-                        document.body.style.cursor = "pointer";
-
-                        getPreviewPanel(INTERSECTED.name.slice(3));
-                    }
-                } else {
+        if (currentRaycastTarget) {
+            raycaster.setFromCamera(currentMouse, currentCamera);
+            var intersects = raycaster.intersectObjects(currentRaycastTarget);
+            if (intersects.length > 0) {
+                if (INTERSECTED != intersects[0].object) {
                     if (INTERSECTED) {
                         INTERSECTED.children[0].material.opacity = 0.25;
                         document.body.style.cursor = "auto";
                         hidePreviewPanel();
                     }
 
-                    INTERSECTED = null;
-                }
-            }
+                    INTERSECTED = intersects[0].object;
+                    INTERSECTED.children[0].material.opacity = 1;
+                    document.body.style.cursor = "pointer";
 
-            // stats.update();
-            // currentRenderer.render(currentScene, currentCamera);
+                    scope.intersectElement = INTERSECTED.name.slice(3);
+                    getPreviewPanel(INTERSECTED.name.slice(3));
+                }
+            } else {
+                if (INTERSECTED) {
+                    INTERSECTED.children[0].material.opacity = 0.25;
+                    document.body.style.cursor = "auto";
+                    hidePreviewPanel();
+                }
+
+                INTERSECTED = null;
+            }
+        }
     }
 
 }

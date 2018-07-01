@@ -16,6 +16,8 @@ LabScene = function(gui, camera, scene, renderer, controls) {
 
     this.labwares = new Labwares(this);
 
+    this.ready2Switch = false;
+
     this.init = function() {
         loadScene();
         loadInteractiveAreas();
@@ -279,6 +281,16 @@ LabScene = function(gui, camera, scene, renderer, controls) {
 
         scope.controls.update();
         scope.renderer.render(scope.scene, scope.camera);
+
+
+        // if (scope.periodicTable.eInfoEnabled == true) {
+        //     console.log("Switch renderer");
+        //     scope.periodicTable.elementRenderer.render(
+        //         scope.periodicTable.elementScene, scope.camera);
+        // } else {
+        //     scope.controls.update();
+        //     scope.renderer.render(scope.scene, scope.camera);
+        // }
     }
 
     // Internals
@@ -404,29 +416,29 @@ LabScene = function(gui, camera, scene, renderer, controls) {
         scope.scene.add(gridHelper2);
         // ----------------------------------------------------
         // Load the fridge
-        new THREE.MTLLoader()
-        .setPath('/models/')
-        .load('fridge.mtl', function(materials) {
-            materials.preload();
-            new THREE.OBJLoader()
-                .setMaterials(materials)
-                .setPath('models/')
-                .load('fridge.obj', function(object) {
-                    object.scale.set(0.5, 0.5, 0.5);
-                    object.castShadow = true;
-
-                    object.position.set(-37.5, 0, 35);
-                    object.rotation.y = Math.PI / 2;
-
-                    object.children[10].material[0].color.setHex(0x4C4C4C);
-                    object.children[35].material[0].color.setHex(0x4C4C4C);
-
-                    object.children[10].castShadow = true;
-                    object.children[35].castShadow = true;
-
-                    scope.scene.add(object);
-                });
-        });
+        // new THREE.MTLLoader()
+        // .setPath('/models/')
+        // .load('fridge.mtl', function(materials) {
+        //     materials.preload();
+        //     new THREE.OBJLoader()
+        //         .setMaterials(materials)
+        //         .setPath('models/')
+        //         .load('fridge.obj', function(object) {
+        //             object.scale.set(0.5, 0.5, 0.5);
+        //             object.castShadow = true;
+        //
+        //             object.position.set(-37.5, 0, 35);
+        //             object.rotation.y = Math.PI / 2;
+        //
+        //             object.children[10].material[0].color.setHex(0x4C4C4C);
+        //             object.children[35].material[0].color.setHex(0x4C4C4C);
+        //
+        //             object.children[10].castShadow = true;
+        //             object.children[35].castShadow = true;
+        //
+        //             scope.scene.add(object);
+        //         });
+        // });
 
         // Load the working desk
         // new THREE.OBJLoader()
@@ -576,7 +588,7 @@ LabScene = function(gui, camera, scene, renderer, controls) {
         // scope.scene.fog = new THREE.Fog(0xFFFFFF, 0.1, 5000);
 
         // Create Periodic Table
-        scope.periodicTable.init();
+
 
     }
 
