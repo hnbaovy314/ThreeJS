@@ -63,20 +63,31 @@ PeriodicTable = function(labScene) {
         raycaster = new THREE.Raycaster();
 
         //for labScene
-        var geo = new THREE.BoxGeometry(5, 50, 75);
-        var mat = new THREE.MeshBasicMaterial({
+        var geoBox = new THREE.BoxGeometry(5, 50, 75);
+        var matBox = new THREE.MeshBasicMaterial({
             opacity: 0,
             transparent: true,
         });
-        var boxTable = new THREE.Mesh(geo, mat);
-        boxTable.name = 'periodic-table';
+        var boxTable = new THREE.Mesh(geoBox, matBox);
+            //a plane
+        var geoPlane = new THREE.PlaneGeometry(40, 25);
+        var matPlane = new THREE.MeshBasicMaterial({
+            color: 0xb5b5b7
+        })
+        var planeTable = new THREE.Mesh(geoPlane, matPlane);
+        boxTable.name = 'element-surround-table';
+        planeTable.name = 'plane-below-table';
         elementTable = getElementGrid(demoTable);
         elementTable.add(boxTable);
+        scope.labScene.add(planeTable)
         scope.labScene.add(elementTable);
+
         boxTable.position.set(0, 0, 10);
         boxTable.rotation.y = -Math.PI / 2;
+        planeTable.position.set(49, 31, -25);
+        planeTable.rotation.y = -Math.PI / 2;
         elementTable.scale.set(0.5, 0.5, 0.4);
-        elementTable.position.set(49, 30, -25)
+        elementTable.position.set(49, 31, -25)
         elementTable.rotation.y = -Math.PI / 2;
         elementTable.name = 'element-table';
         scope.labScene.previewInfo['element-table'] = {
@@ -230,6 +241,8 @@ PeriodicTable = function(labScene) {
         scope.labScene.scene = currentScene;
         scope.labScene.controls = currentControl;
         scope.labScene.renderer = currentRenderer;
+        currentRaycastTarget = periodicTable;
+        destroyElementModel();
     }
 
     this.switch2Local = function() {
@@ -254,6 +267,7 @@ PeriodicTable = function(labScene) {
         event.preventDefault();
 
         if (INTERSECTED ) {
+            INTERSECTED.children[0].material.opacity = 0.25;
             // currentControls.reset();
             // currentControls.update();
             scope.secondSetEnabled = true;
@@ -457,7 +471,7 @@ PeriodicTable = function(labScene) {
             //     .to({z: '+' +  Math.PI * 8 / i}, 10000)
             //     .repeat(Infinity)
             //     .start();
-            eGroup.add(elementTools.getElementModelOrbitLayer(ePerOrbit[i], radius + 5 * (i + 1), 0, z));
+            eGroup.add(getElementModelOrbitLayer(ePerOrbit[i], radius + 5 * (i + 1), 0, z));
         }
 
 
@@ -471,6 +485,56 @@ PeriodicTable = function(labScene) {
         return group;
 
         // var eGroup = elementScene.getObjectByName('Electron group');
+    }
+
+    // Create orbit layer of eletrons
+    function getElementModelOrbitLayer(electronNumber, radius, tilt, z) {
+        var orbitContainer = new THREE.Object3D();
+        orbitContainer.rotation.x = tilt;
+
+        var orbit = new THREE.Object3D();
+        var mergedGeometry = new THREE.Geometry();
+
+        var orbitGeometry = new THREE.CircleGeometry(radius, 100);
+        orbitGeometry.vertices.shift();
+        var line = new THREE.LineSegments(orbitGeometry, new THREE.LineBasicMaterial({color: 0x1A1A1A}));
+        line.material.depthTest = false;
+        line.material.transparent = true;
+
+        var electronGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+        var electronMaterial = new THREE.MeshBasicMaterial({
+            color: 0x1A1A1A,
+        });
+
+        var angle = 2 * Math.PI / electronNumber;
+        var count = 0;
+        for (var i = 0; i < electronNumber; i++) {
+            var x = Math.cos(angle * count) * radius;
+            var y = Math.sin(angle * count) * radius;
+            count++;
+
+            electronGeometry.translate(x, y, 0);
+            mergedGeometry.merge(electronGeometry);
+            electronGeometry.translate(-x, -y, 0);
+        }
+
+        var electronMesh = new THREE.Mesh(mergedGeometry, electronMaterial);
+
+        orbit.add(line);
+        orbit.add(electronMesh);
+
+        var tween = new TWEEN.Tween(orbit.rotation)
+            .to({z: '+' + Math.PI * 8 / radius}, 10000)
+            .repeat(Infinity)
+            .start();
+
+        orbit.name = 'electron-orbit';
+        orbitContainer.add(orbit);
+
+        meshArr.push(line);
+        meshArr.push(electronMesh);
+
+        return orbitContainer;
     }
 
     function getElementInfo(element, divId, eConf, category) {
@@ -519,7 +583,7 @@ PeriodicTable = function(labScene) {
         })
     }
 
-    this.destroyElementModel = function() {
+    function destroyElementModel() {
         var elementModel = elementScene.getObjectByName('Element Model');
         var eGroup = elementScene.getObjectByName('Electron group');
 
@@ -531,6 +595,13 @@ PeriodicTable = function(labScene) {
             elementScene.remove(elementModel.children[i]);
         }
         elementScene.remove(elementModel);
+
+        for (var i = 0; i < meshArr.length; i++) {
+            meshArr[i].geometry.dispose();
+            meshArr[i].material.dispose();
+        }
+
+        meshArr = [];
     }
 
     // Get individual element

@@ -48,7 +48,10 @@ ElementTools = function () {
       for (var i=0; i < eConf.length; i++){
           eConfig = eConfig.concat(orbit[i], eConf[i].toString(), ' ');
       }
-      if (z > 10 & z <= 18){
+      if (z <= 10) {
+          return eConfig;
+      }
+      else if (z > 10 & z <= 18){
         eConfig = eConfig.replace('1s2 2s2 2p6 ', '[Ne]');
       }
       else if (z > 18 & z <= 36){
@@ -69,56 +72,6 @@ ElementTools = function () {
       }
 
       return eConfig;
-    }
-
-    // Create orbit layer of eletrons
-    this.getElementModelOrbitLayer = function(electronNumber, radius, tilt, z) {
-        var orbitContainer = new THREE.Object3D();
-        orbitContainer.rotation.x = tilt;
-
-        var orbit = new THREE.Object3D();
-        var mergedGeometry = new THREE.Geometry();
-
-        var orbitGeometry = new THREE.CircleGeometry(radius, 100);
-        orbitGeometry.vertices.shift();
-        var line = new THREE.LineSegments(orbitGeometry, new THREE.LineBasicMaterial({color: 0x1A1A1A}));
-        line.material.depthTest = false;
-        line.material.transparent = true;
-
-        var electronGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-        var electronMaterial = new THREE.MeshBasicMaterial({
-            color: 0x1A1A1A,
-        });
-
-        var angle = 2 * Math.PI / electronNumber;
-        var count = 0;
-        for (var i = 0; i < electronNumber; i++) {
-            var x = Math.cos(angle * count) * radius;
-            var y = Math.sin(angle * count) * radius;
-            count++;
-
-            electronGeometry.translate(x, y, 0);
-            mergedGeometry.merge(electronGeometry);
-            electronGeometry.translate(-x, -y, 0);
-        }
-
-        var electronMesh = new THREE.Mesh(mergedGeometry, electronMaterial);
-
-        orbit.add(line);
-        orbit.add(electronMesh);
-
-        var tween = new TWEEN.Tween(orbit.rotation)
-            .to({z: '+' + Math.PI * 8 / radius}, 10000)
-            .repeat(Infinity)
-            .start();
-
-        orbit.name = 'electron-orbit';
-        orbitContainer.add(orbit);
-
-        // meshArr.push(line);
-        // meshArr.push(electronMesh);
-
-        return orbitContainer;
     }
 
 
