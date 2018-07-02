@@ -18,8 +18,8 @@ PeriodicTable = function(labScene) {
     const elementTools = new ElementTools();
     const eventListener = new PtEventListener();
     const previewPanelSize = 200;
-    const elementCanvasWidth = window.innerWidth*0.62*0.7;
-    const elementCanvasHeight = window.innerHeight*0.75*0.9
+    const elementCanvasWidth = window.innerWidth * 0.55 * 0.7;
+    const elementCanvasHeight = window.innerHeight * 0.75 * 0.93;
     var scope = this;
 
     //Enable Element view
@@ -166,7 +166,6 @@ PeriodicTable = function(labScene) {
         document.addEventListener('click', onTableBoxClick, false);
         window.addEventListener('resize', onWindowResize, false);
 
-        // document.getElementById('ds-close-button').addEventListener('click', onElementModelCloseButtonClick, false);
     }
 
     function calcEPerShell(){
@@ -322,36 +321,6 @@ PeriodicTable = function(labScene) {
         $('#infoBtn3').on('click', function() {
             var wnd = window.open(`https://en.wikipedia.org/wiki/${element.name}`);
         });
-    }
-
-    // Listening for click event on the element model panel close button
-    function onElementModelCloseButtonClick(event) {
-        event.preventDefault();
-
-        currentControls.reset();
-        currentControls.update();
-
-        dataScreen.style.transform = 'translateY(100vh)';
-        dataScreen.style.opacity = 0;
-        elementTools.clearDiv('left-info-text');
-        elementTools.clearDiv('left-sub-info');
-
-        // Switch to table camera, scene & ...
-        currentCamera = defaultCamera;
-        currentScene = tableScene;
-        currentRenderer = tableRenderer;
-        currentControls = defaultControls;
-        currentRaycastTarget = periodicTable;
-
-        // Remove element model from elementScene
-        destroyElementModel();
-
-        currentControls.reset();
-        currentControls.target.set(0, 0, -50);
-        currentCamera.position.x = 0;
-        currentCamera.position.y = 0;
-        currentCamera.position.z = 0;
-        currentCamera.updateProjectionMatrix();
     }
 
     // Get element preview data panel

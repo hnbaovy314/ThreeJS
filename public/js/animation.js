@@ -110,7 +110,7 @@ Animation = function(labGuide) {
         }
     }
 
-    this.getAnimation1 = function(object, name, scene) {
+    this.getEffectAnimation = function(object, name, scene) {
         var anim = anims[name].clone();
         anim.data = anims[name].data;
 
@@ -492,7 +492,7 @@ Animation = function(labGuide) {
         .onComplete(function() {
             THREE.SceneUtils.attach(hand, scope.scene, scope.camera);
 
-            scope.getAnimation1(object, "flame");
+            scope.getEffectAnimation(object, "flame");
 
             new TWEEN.Tween(hand.position)
             .to({x: oldPos.x, y: oldPos.y, z: oldPos.z}, 400)

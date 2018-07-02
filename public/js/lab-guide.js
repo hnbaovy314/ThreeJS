@@ -289,7 +289,7 @@ LabGuide = function(gui, labScene) {
         scope.labScene.periodicTable.ptEnabled = true;
 
         new TWEEN.Tween(scope.labScene.controls.target)
-        .to({x: 49, y: 30, z: -25.01}, 500)
+        .to({x: 24.01, y: 30, z: -25}, 500)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
 
