@@ -20,7 +20,7 @@ Labwares = function(labScene, gui) {
         loadUtils();
     }
 
-    this.getLabware = function(data) {
+    this.getInteractiveLabware = function(data) {
         var labware = labwares[data.name].clone();
         labware.boundingBox = labwares[data.name].boundingBox;
         labware.scaleMultiplier = labwares[data.name].scaleMultiplier;
@@ -62,6 +62,21 @@ Labwares = function(labScene, gui) {
         });
 
         return util;
+    }
+
+    this.getNonInteractiveLabware = function(name) {
+        var labware = labwares[name].clone();
+        labware.boundingBox = labwares[name].boundingBox;
+        labware.scaleMultiplier = labwares[name].scaleMultiplier;
+        labware.enableInfo = labwares[name].enableInfo;
+
+        labware.traverse(function(child) {
+            if (child instanceof THREE.Mesh) {
+                child.material = child.material.clone();
+            }
+        });
+
+        return labware;
     }
 
     // Internals
@@ -319,6 +334,143 @@ Labwares = function(labScene, gui) {
                     object.enableInfo = false;
                     labwares[object.name] = object;
                 });
+        });
+
+        // Load the eyedropper
+        new THREE.OBJLoader()
+        .load('/models/labware/eyedropper.obj', function(object) {
+            object.boundingBox = new THREE.Box3().setFromObject(object);
+            var offsetX = (object.boundingBox.max.x +  object.boundingBox.min.x) / 2;
+            var offsetY = (object.boundingBox.max.y +  object.boundingBox.min.y) / 2;
+            var offsetZ = (object.boundingBox.max.z +  object.boundingBox.min.z) / 2;
+            object.traverse(function(child) {
+                if (child instanceof THREE.Mesh) {
+                    child.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-offsetX, -offsetY, -offsetZ));
+                }
+            });
+
+            object.scaleMultiplier = 1;
+            object.scale.set(object.scaleMultiplier, object.scaleMultiplier, object.scaleMultiplier);
+
+            object.name = "eyedropper";
+            object.enableInfo = false;
+            labwares[object.name] = object;
+        })
+
+        // Load the funnel
+        new THREE.OBJLoader()
+        .load('/models/labware/funnel.obj', function(object) {
+            object.boundingBox = new THREE.Box3().setFromObject(object);
+            var offsetX = (object.boundingBox.max.x +  object.boundingBox.min.x) / 2;
+            var offsetY = (object.boundingBox.max.y +  object.boundingBox.min.y) / 2;
+            var offsetZ = (object.boundingBox.max.z +  object.boundingBox.min.z) / 2;
+            object.traverse(function(child) {
+                if (child instanceof THREE.Mesh) {
+                    child.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-offsetX, -offsetY, -offsetZ));
+                }
+            });
+
+            object.scaleMultiplier = 1;
+            object.scale.set(object.scaleMultiplier, object.scaleMultiplier, object.scaleMultiplier);
+
+            object.name = "funnel";
+            object.enableInfo = false;
+            labwares[object.name] = object;
+        })
+
+        // Load the pipette
+        new THREE.OBJLoader()
+        .load('/models/labware/pipette.obj', function(object) {
+            object.boundingBox = new THREE.Box3().setFromObject(object);
+            var offsetX = (object.boundingBox.max.x +  object.boundingBox.min.x) / 2;
+            var offsetY = (object.boundingBox.max.y +  object.boundingBox.min.y) / 2;
+            var offsetZ = (object.boundingBox.max.z +  object.boundingBox.min.z) / 2;
+            object.traverse(function(child) {
+                if (child instanceof THREE.Mesh) {
+                    child.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-offsetX, -offsetY, -offsetZ));
+                }
+            });
+
+            object.scaleMultiplier = 1;
+            object.scale.set(object.scaleMultiplier, object.scaleMultiplier, object.scaleMultiplier);
+
+            object.name = "pipette";
+            object.enableInfo = false;
+            labwares[object.name] = object;
+        })
+
+        // Load the stirring rod
+        new THREE.OBJLoader()
+        .load('/models/labware/stirring-rod.obj', function(object) {
+            object.boundingBox = new THREE.Box3().setFromObject(object);
+            var offsetX = (object.boundingBox.max.x +  object.boundingBox.min.x) / 2;
+            var offsetY = (object.boundingBox.max.y +  object.boundingBox.min.y) / 2;
+            var offsetZ = (object.boundingBox.max.z +  object.boundingBox.min.z) / 2;
+            object.traverse(function(child) {
+                if (child instanceof THREE.Mesh) {
+                    child.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-offsetX, -offsetY, -offsetZ));
+                }
+            });
+
+            object.scaleMultiplier = 1;
+            object.scale.set(object.scaleMultiplier, object.scaleMultiplier, object.scaleMultiplier);
+
+            object.name = "stirring-rod";
+            object.enableInfo = false;
+            labwares[object.name] = object;
+        })
+
+        // Load the tongs
+        new THREE.MTLLoader()
+        .setPath('/models/labware/')
+        .load('tongs.mtl', function(materials) {
+            materials.preload();
+            new THREE.OBJLoader()
+            .setMaterials(materials)
+            .setPath('models/labware/')
+            .load('tongs.obj', function(object) {
+                object.boundingBox = new THREE.Box3().setFromObject(object);
+                var offsetX = (object.boundingBox.max.x +  object.boundingBox.min.x) / 2;
+                var offsetY = (object.boundingBox.max.y +  object.boundingBox.min.y) / 2;
+                var offsetZ = (object.boundingBox.max.z +  object.boundingBox.min.z) / 2;
+                object.traverse(function(child) {
+                    if (child instanceof THREE.Mesh) {
+                        child.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-offsetX, -offsetY, -offsetZ));
+                    }
+                });
+    
+                object.scaleMultiplier = 12.5;
+                object.scale.set(object.scaleMultiplier, object.scaleMultiplier, object.scaleMultiplier);
+    
+                object.name = "tongs";
+                object.enableInfo = false;
+                labwares[object.name] = object;
+            });
+        });
+
+        // Load the jar
+        new THREE.OBJLoader()
+        .setPath('models/labware/')
+        .load('jar.obj', function(object) {
+            object.boundingBox = new THREE.Box3().setFromObject(object);
+            var offsetX = (object.boundingBox.max.x + object.boundingBox.min.x) / 2;
+            var offsetY = (object.boundingBox.max.y + object.boundingBox.min.y) / 2;
+            var offsetZ = (object.boundingBox.max.z + object.boundingBox.min.z) / 2;
+            object.traverse(function(child) {
+                if (child instanceof THREE.Mesh) {
+                    child.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-offsetX, -offsetY, -offsetZ));
+                    // child.material.side = THREE.DoubleSide;
+                    child.material.transparent = true;
+                    child.material.opacity = 0.7;
+                }
+            });
+
+            object.scaleMultiplier = 0.03;
+            object.scale.set(object.scaleMultiplier, object.scaleMultiplier, object.scaleMultiplier);
+
+            object.name = "jar";
+            object.enableInfo = true;
+            labwares[object.name] = object;
         });
     }
 
@@ -774,6 +926,41 @@ Labwares = function(labScene, gui) {
                         );
 
                         fill.position.set(0, 0 - height / 2 + fillHeight / 2, 0 - width / 9);
+                        labware.add(fill);
+
+                        break;
+                    }
+                    default: break;
+                }
+
+                break;
+            }
+            case 'jar': {
+                switch (data.form) {
+                    case "liquid": {
+                        // Not yet implemented
+
+                        break;
+                    }
+                    case "solid": {
+                        var fillHeight = height * data.fillScale;
+                        var mergedGeometry = new THREE.Geometry();
+                        var geometry = new THREE.CylinderGeometry(width / 2.1, width / 2.1, fillHeight, 32, 32);
+                        mergedGeometry.merge(geometry);
+
+                        var material = new THREE.MeshPhongMaterial();
+                        var fill = new THREE.Mesh(mergedGeometry, material);
+
+                        var loader = new THREE.TextureLoader();
+                        loader.load(
+                            'textures/chemical/' + data.texture,
+                            function(texture) {
+                                material.map = texture;
+                                material.needsUpdate = true;
+                            }
+                        );
+
+                        fill.position.set(0, 0 - fillHeight / 2, 0);
                         labware.add(fill);
 
                         break;

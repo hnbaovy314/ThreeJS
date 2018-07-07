@@ -46,7 +46,7 @@ LabScene = function(gui, camera, scene, renderer, controls) {
         var containers = [];
         var repos = false;
         for (var i = 0; i < labwares.length; i++) {
-            var container = scope.labwares.getLabware(labwares[i]);
+            var container = scope.labwares.getInteractiveLabware(labwares[i]);
             containers.push(container);
 
             var boundingBox = new THREE.Box3().setFromObject(container);

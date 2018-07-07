@@ -14,7 +14,7 @@ Animation = function(labGuide) {
         loadAnimation();
     }
 
-    this.getParticleSystem = function(name, object, scene) {
+    this.getParticleSystem = function(name, object) {
         var boundingBox = new THREE.Box3().setFromObject(object);
         var center = boundingBox.getCenter();
 
@@ -27,6 +27,11 @@ Animation = function(labGuide) {
             }
             case 'flask': {
                 scale = 0.5;
+
+                break;
+            }
+            case 'beaker': {
+                scale = 0.4;
 
                 break;
             }
@@ -46,7 +51,7 @@ Animation = function(labGuide) {
         var minZ = (boundingBox.min.z - center.z) * scale;
         
         switch (name) {
-            case 'bubble': {
+            case 'verticle-bubble': {
                 new THREE.TextureLoader()
                 .load("/textures/chemical/bubble.png", function(texture) {
                     // Test bubble effect (boiling?)
@@ -67,9 +72,6 @@ Animation = function(labGuide) {
                             pY = Math.random() * (maxY - minY) + minY,
                             pZ = Math.random() * (maxZ - minZ) + minZ,
                             particle = new THREE.Vector3(pX, pY, pZ);
-
-                        // create a velocity vector
-                        particle.velocity = new THREE.Vector3(0, 0, 0);
 
                         // add it to the geometry
                         particles.vertices.push(particle);
@@ -92,12 +94,32 @@ Animation = function(labGuide) {
                             z: minZ
                         }
                     };
-                    particleSystem.particleCount = 50;
+                    particleSystem.particleCount = particleCount;
                     particleSystem.position.set(
                         center.x,
                         center.y -= (boundingBox.max.y - boundingBox.min.y) / 2,
                         center.z
                     );
+
+                    particleSystem.updateFunc = function(pSystem) {
+                        var pCount = pSystem.particleCount;
+                        while (pCount--) {
+                            // get the particle
+                            var particle = pSystem.geometry.vertices[pCount];
+            
+                            // check if we need to reset
+                            if (particle.y > pSystem.boundingBox.max.y) {
+                                particle.y = pSystem.boundingBox.min.y;
+                                // particle.y = 0;
+                            }
+            
+
+                            // and the position
+                            particle.y += 0.01;
+                        }
+            
+                        pSystem.geometry.verticesNeedUpdate = true;
+                    }
 
                     // add it to the scene
                     scope.scene.add(particleSystem);
@@ -106,11 +128,331 @@ Animation = function(labGuide) {
             
                 break;
             }
+            case 'exo-bubble': {
+                var cubeBoundingBox = new THREE.Box3().setFromObject(object.cube);
+                var cubeCenter = cubeBoundingBox.getCenter();
+
+                new THREE.TextureLoader()
+                .load("/textures/chemical/bubble.png", function(texture) {
+                    var particleCount = 100,
+                    particles = new THREE.Geometry(),
+                    pMaterial = new THREE.PointCloudMaterial({
+                        map: texture,
+                        size: (boundingBox.max.x - boundingBox.min.x) * 0.2 * scale,
+                        transparent: true,
+                        // depthWrite: false
+                        depthTest: false
+                    });
+
+                    for (var p = 0; p < particleCount; p++) {
+                        var pX = 0,
+                            pY = 0,
+                            pZ = 0,
+                            particle = new THREE.Vector3(pX, pY, pZ);
+
+                        particle.velocity = {
+                            x: (Math.random() - 0.5) / 20,
+                            y: ((Math.random() - 1) / 2) / 20,
+                            z: (Math.random() - 0.5) / 20
+                        }
+
+                        particles.vertices.push(particle);
+                    }
+
+                    var particleSystem = new THREE.PointCloud(
+                        particles,
+                        pMaterial
+                    );
+
+                    particleSystem.boundingBox = {
+                        max: {
+                            x: maxX,
+                            y: maxY,
+                            z: maxZ
+                        },
+                        min: {
+                            x: minX,
+                            y: minY,
+                            z: minZ
+                        }
+                    };
+
+                    particleSystem.particleCount = particleCount;
+                    particleSystem.position.set(
+                        cubeCenter.x,
+                        cubeCenter.y,
+                        cubeCenter.z
+                    );
+
+                    particleSystem.updateFunc = function(pSystem) {
+                        var pCount = pSystem.particleCount;
+                        while (pCount--) {
+                            var particle = pSystem.geometry.vertices[pCount];
+            
+                            if (particle.x > pSystem.boundingBox.max.x || particle.x < pSystem.boundingBox.min.x) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+
+                            if (particle.y > pSystem.boundingBox.max.y || particle.y < pSystem.boundingBox.min.y + 0.2) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+
+                            if (particle.z > pSystem.boundingBox.max.z || particle.z < pSystem.boundingBox.min.z) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+
+                            particle.x += particle.velocity.x;
+                            particle.y += particle.velocity.y;
+                            particle.z += particle.velocity.z;
+                        }
+            
+                        pSystem.geometry.verticesNeedUpdate = true;
+                    }
+
+                    // add it to the scene
+                    scope.scene.add(particleSystem);
+                    particleSystems.push(particleSystem);      
+                });
+                
+                break;
+            }
+            case "smoke": {
+                new THREE.TextureLoader()
+                .load("/textures/chemical/smoke.png", function(texture) {
+                    var particleCount = 200,
+                    particles = new THREE.Geometry(),
+                    pMaterial = new THREE.PointCloudMaterial({
+                        map: texture,
+                        size: 2,
+                        transparent: true,
+                        depthWrite: false,
+                        // depthTest: false
+                    });
+
+                    for (var p = 0; p < particleCount; p++) {
+                        var pX = 0,
+                            pY = 0,
+                            pZ = 0,
+                            particle = new THREE.Vector3(pX, pY, pZ);
+
+                        particle.velocity = {
+                            x: (Math.random() - 0.5) / 100,
+                            y: (Math.random() - 0.5) / 20,
+                            z: (Math.random() - 0.5) / 100
+                        }
+
+                        particles.vertices.push(particle);
+                    }
+
+                    var particleSystem = new THREE.PointCloud(
+                        particles,
+                        pMaterial
+                    );
+
+                    particleSystem.boundingBox = {
+                        max: {
+                            x: maxX * 5,
+                            y: maxY * 25,
+                            z: maxZ * 5
+                        },
+                        min: {
+                            x: minX * 5,
+                            y: minY,
+                            z: minZ * 5
+                        }
+                    };
+
+                    particleSystem.particleCount = particleCount;
+                    particleSystem.position.set(
+                        center.x,
+                        center.y,
+                        center.z
+                    );
+
+                    particleSystem.updateFunc = function(pSystem) {
+                        var pCount = pSystem.particleCount;
+                        while (pCount--) {
+                            var particle = pSystem.geometry.vertices[pCount];
+
+                            if ((particle.x > maxX || particle.x < minX) && particle.y < maxY) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+
+                            if ((particle.z > maxZ || particle.z < minZ) && particle.y < maxY) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+            
+                            if (particle.x > pSystem.boundingBox.max.x || particle.x < pSystem.boundingBox.min.x) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+
+                            if (particle.y > pSystem.boundingBox.max.y || particle.y < pSystem.boundingBox.min.y) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+
+                            if (particle.z > pSystem.boundingBox.max.z || particle.z < pSystem.boundingBox.min.z) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+
+                            particle.x += particle.velocity.x;
+                            particle.y += particle.velocity.y;
+                            particle.z += particle.velocity.z;
+                        }
+            
+                        pSystem.geometry.verticesNeedUpdate = true;
+                    }
+
+                    // add it to the scene
+                    scope.scene.add(particleSystem);
+                    particleSystems.push(particleSystem);
+                });
+
+                break;
+            }
+            case "flare": {
+                if (!object.cube) {
+                    break;
+                }
+
+                // Flame
+                object.cube.boundingBox = new THREE.Box3().setFromObject(object.cube);
+                object.cube.scaleMultiplier = object.scaleMultiplier * 2;
+                var cubeBoundingBox = object.cube.boundingBox;
+                var cubeCenter = cubeBoundingBox.getCenter();
+
+                scope.getEffectAnimation(object.cube, 'flame', object.cube.boundingBox.getCenter());
+
+                // Light
+                var light = new THREE.PointLight(0xE25822, 1.5, 2.5);
+                light.position.set(
+                    cubeCenter.x,
+                    cubeCenter.y + (cubeBoundingBox.max.y - cubeBoundingBox.min.y),
+                    cubeCenter.z
+                );
+                scope.scene.add(light);
+                flameLights.push(light);
+
+                // Flare
+                var flareTexture;
+                new THREE.TextureLoader()
+                .load("/textures/chemical/red-flare.png", function(texture) {
+                    flareTexture = texture;
+
+                    var particleCount = 50,
+                    particles = new THREE.Geometry(),
+                    pMaterial = new THREE.PointCloudMaterial({
+                        map: texture,
+                        size: (boundingBox.max.x - boundingBox.min.x) * 0.5 * scale,
+                        transparent: true,
+                        // depthWrite: false
+                    });
+
+                    for (var p = 0; p < particleCount; p++) {
+                        var pX = 0,
+                            pY = 0,
+                            pZ = 0,
+                            particle = new THREE.Vector3(pX, pY, pZ);
+
+                        particle.velocity = {
+                            x: (Math.random() - 0.5) / 10,
+                            y: (Math.random() - 0.5) / 10,
+                            z: (Math.random() - 0.5) / 10
+                        }
+
+                        particles.vertices.push(particle);
+                    }
+
+                    var particleSystem = new THREE.PointCloud(
+                        particles,
+                        pMaterial
+                    );
+
+                    particleSystem.boundingBox = {
+                        max: {
+                            x: maxX,
+                            y: maxY,
+                            z: maxZ
+                        },
+                        min: {
+                            x: minX,
+                            y: minY,
+                            z: minZ
+                        }
+                    };
+
+                    particleSystem.particleCount = particleCount;
+                    particleSystem.position.set(
+                        cubeCenter.x,
+                        cubeCenter.y,
+                        cubeCenter.z
+                    );
+
+                    particleSystem.updateFunc = function(pSystem) {
+                        var pCount = pSystem.particleCount;
+                        while (pCount--) {
+                            var particle = pSystem.geometry.vertices[pCount];
+            
+                            if (particle.x > pSystem.boundingBox.max.x || particle.x < pSystem.boundingBox.min.x) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+
+                            if (particle.y > pSystem.boundingBox.max.y || particle.y < pSystem.boundingBox.min.y) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+
+                            if (particle.z > pSystem.boundingBox.max.z || particle.z < pSystem.boundingBox.min.z) {
+                                particle.x = 0;
+                                particle.y = 0;
+                                particle.z = 0;
+                            }
+
+                            particle.x += particle.velocity.x;
+                            particle.y += particle.velocity.y;
+                            particle.z += particle.velocity.z;
+                        }
+            
+                        pSystem.geometry.verticesNeedUpdate = true;
+                    }
+
+                    // add it to the scene
+                    setTimeout(function() {
+                        scope.scene.add(particleSystem);
+                        particleSystems.push(particleSystem);      
+                    }, 2000);
+
+                    // Lensflare
+                    var lensflare = new THREE.Lensflare();
+                    lensflare.addElement(new THREE.LensflareElement(flareTexture, 256, 0));
+                    light.add(lensflare);
+                });
+                
+                break;
+            }
             default: break;
         }
     }
 
-    this.getEffectAnimation = function(object, name, scene) {
+    this.getEffectAnimation = function(object, name, position) {
         var anim = anims[name].clone();
         anim.data = anims[name].data;
 
@@ -121,13 +463,45 @@ Animation = function(labGuide) {
         anim.scale.set(width, width, width);
         anim.boundingBox = new THREE.Box3().setFromObject(anim);
         anim.position.set(
-            object.position.x,
-            object.position.y + height / 2 + (anim.boundingBox.max.y - anim.boundingBox.min.y) / 6,
-            object.position.z
+            position.x,
+            position.y + height / 2 + (anim.boundingBox.max.y - anim.boundingBox.min.y) / 6,
+            position.z
         );
         enabledAnims.push(anim);
 
         return anim;
+    }
+
+    this.getInteractiveAnimation = function(name, object) {
+        var hand = camera.children[1];
+
+        switch (name) {
+            case 'pick-up': {
+                pickUp(hand, object);
+                break;
+            }
+            case 'drop': {
+                drop(hand, object);
+                break;
+            }
+            case 'pour': {
+                pour(hand, object);             
+                break;
+            }
+            case "clean": {
+                clean(hand, object);
+                break;
+            }
+            case "light-burner": {
+                lightBurner(hand, object);
+                break;
+            }
+            case "use-tongs": {
+                useTongs(hand, object);
+                break;
+            }
+            default: break;
+        }
     }
 
     this.reset = function() {
@@ -140,6 +514,19 @@ Animation = function(labGuide) {
             scope.labGuide.labScene.destroy(particleSystems[i]);
         }
         particleSystems = [];
+
+        for (var i = flameLights.length - 1; i >= 0; i--) {
+            if (flameLights[i].children[flameLights[i].children.length - 1] instanceof THREE.Lensflare) {
+                flameLights[i].children[flameLights[i].children.length - 1].dispose();
+            }
+
+            if (flameLights[i].shadow && flameLights[i].shadow.map) {
+				flameLights[i].shadow.map.dispose();
+            }
+            
+            scope.labGuide.labScene.remove(flameLights[i]);
+        }
+        flameLights = [];
     }
 
     this.update = function() {
@@ -168,54 +555,13 @@ Animation = function(labGuide) {
             }
         }
 
-        if (particleSystems.length > 0) {
-            // Update particle systems
-            var pCount = particleSystems[0].particleCount;
-            while (pCount--) {
-                // get the particle
-                var particle = particleSystems[0].geometry.vertices[pCount];
-
-                // check if we need to reset
-                if (particle.y > particleSystems[0].boundingBox.max.y) {
-                    particle.y = particleSystems[0].boundingBox.min.y;
-                    particle.y = 0;
-                }
-
-                // update the velocity with
-                // a splat of randomniz
-                particle.velocity.y += Math.random() * 0.1;
-
-                // and the position
-                // particle.x += particle.velocity.x;
-                particle.y += 0.01;
-                // particle.z += particle.velocity.z;
-            }
-
-            particleSystems[0].geometry.verticesNeedUpdate = true;
+        for (var i = 0; i < particleSystems.length; i++) {
+            particleSystems[i].updateFunc(particleSystems[i]);
         }
-    }
 
-    this.getInteractiveAnimation = function(name, object) {
-        var hand = camera.children[1];
-
-        switch (name) {
-            case 'pick-up': {
-                pickUp(hand, object);
-                break;
-            }
-            case 'pour': {
-                pour(hand, object);             
-                break;
-            }
-            case "clean": {
-                clean(hand, object);
-                break;
-            }
-            case "light-burner": {
-                lightBurner(hand, object);
-                break;
-            }
-            default: break;
+        for (var i = 0; i < flameLights.length; i++) {
+            var value = (Math.sin(new Date().getTime() * 0.01) + 1) / 2 + 0.5;
+            flameLights[i].intensity = value;
         }
     }
 
@@ -226,6 +572,8 @@ Animation = function(labGuide) {
     var anims = {}, enabledAnims = [], animReady = true;
 
     var particleSystems = [];
+
+    var flameLights = [];
 
     function loadAnimation() {
         // Flame animation
@@ -242,7 +590,9 @@ Animation = function(labGuide) {
             map: texture,
             overdraw: 0.5,
             side: THREE.DoubleSide,
-            transparent: true
+            transparent: true,
+            depthWrite: false,
+            depthTest: false
         });
 
         var anim = new THREE.Mesh(
@@ -306,6 +656,72 @@ Animation = function(labGuide) {
             .easing(TWEEN.Easing.Quadratic.InOut)
             .onComplete(function() {
                 scope.labGuide.nextInteractiveStep();
+            })
+            .start();
+        })
+        .start();
+    }
+
+    function drop(hand, object) {
+        var tool = hand.children[1];
+
+        var objBoundingBox = new THREE.Box3().setFromObject(object);
+
+        var oldPos = {
+            x: hand.position.x,
+            y: hand.position.y,
+            z: hand.position.z
+        };
+
+        var objPos = {
+            x: object.position.x + (objBoundingBox.max.x - objBoundingBox.min.x) / 3 ,
+            y: object.position.y + (objBoundingBox.max.y - objBoundingBox.min.y) / 2 + 2,
+            z: object.position.z - (objBoundingBox.max.z - objBoundingBox.min.z) / 1.5,
+        }
+
+        THREE.SceneUtils.detach(hand, scope.camera, scope.scene);
+        hand.rotation.set(-1.9, 0.16, 2.2);
+
+        new TWEEN.Tween(hand.position)
+        .to({x: objPos.x, y: objPos.y, z: objPos.z}, 400)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onComplete(function() {
+            new TWEEN.Tween(hand.position)
+            .to({y: objPos.y - 3}, 400)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .onComplete(function() {
+                if (tool) {
+                    if (tool.name == "tongs") {
+                        var chemical = tool.children[tool.children.length - 1];
+                        if (chemical) {
+                            THREE.SceneUtils.detach(chemical, tool, scope.scene);
+                            chemical.position.y = objBoundingBox.min.y + 0.4;
+                            THREE.SceneUtils.attach(chemical, scope.scene, object);
+                        }
+                    }
+                };
+
+                new TWEEN.Tween(hand.position)
+                .to({y: objPos.y}, 400)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onComplete(function() {
+                    if (tool) {
+                        hand.remove(tool);
+                        scope.labGuide.labScene.destroy(tool);
+                    }
+
+                    THREE.SceneUtils.attach(hand, scope.scene, scope.camera);                  
+
+                    new TWEEN.Tween(hand.position)
+                    .to({x: oldPos.x, y: oldPos.y, z: oldPos.z}, 400)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .onComplete(function() {
+                        scope.labGuide.resetToEmptyHand();
+                        scope.labGuide.nextInteractiveStep();
+                    })
+                    .start();
+                })
+                .start();
             })
             .start();
         })
@@ -492,7 +908,7 @@ Animation = function(labGuide) {
         .onComplete(function() {
             THREE.SceneUtils.attach(hand, scope.scene, scope.camera);
 
-            scope.getEffectAnimation(object, "flame");
+            scope.getEffectAnimation(object, "flame", object.position);
 
             new TWEEN.Tween(hand.position)
             .to({x: oldPos.x, y: oldPos.y, z: oldPos.z}, 400)
@@ -503,5 +919,95 @@ Animation = function(labGuide) {
             .start();
         })
         .start();
+    }
+
+    function useTongs(hand, object) {
+        var tongs = scope.labwares.getNonInteractiveLabware('tongs');
+        hand.add(tongs);
+
+        tongs.position.set(-0.03, 0.035, -0.007);
+        tongs.rotation.set(0.7, -1.6, 0.8);
+        tongs.scale.set(tongs.scaleMultiplier / hand.scaleMultiplier, tongs.scaleMultiplier / hand.scaleMultiplier, tongs.scaleMultiplier / hand.scaleMultiplier);
+
+        var tongsBoundingBox = new THREE.Box3().setFromObject(object);
+        var objBoundingBox = new THREE.Box3().setFromObject(object);
+
+        var oldPos = {
+            x: hand.position.x,
+            y: hand.position.y,
+            z: hand.position.z
+        };
+
+        var objPos = {
+            x: object.position.x + (objBoundingBox.max.x - objBoundingBox.min.x) / 2 ,
+            y: object.position.y + (objBoundingBox.max.y - objBoundingBox.min.y) / 2 + 2,
+            z: object.position.z - (objBoundingBox.max.z - objBoundingBox.min.z) / 2,
+        }
+
+        THREE.SceneUtils.detach(hand, scope.camera, scope.scene);
+        hand.rotation.set(-1.9, 0.16, 1);
+
+        new TWEEN.Tween(hand.position)
+        .to({x: objPos.x, y: objPos.y, z: objPos.z}, 400)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onComplete(function() {
+            new TWEEN.Tween(hand.position)
+            .to({y: objPos.y - 3}, 400)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .onComplete(function() {
+                var material = new THREE.MeshBasicMaterial();
+                var fill = object.children[object.children.length - 1];
+                if (fill.material.map) {
+                    material.map = fill.material.map;
+                }
+
+                var cube = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.5, 0.5, 0.5),
+                    material
+                );
+
+                hand.children[1].add(cube);
+                cube.scale.set(1 / hand.scaleMultiplier, 1 / hand.scaleMultiplier, 1 / hand.scaleMultiplier);
+                cube.position.x += (tongsBoundingBox.max.x - tongs.boundingBox.min.x) / (hand.scaleMultiplier * tongs.scaleMultiplier);
+
+                new TWEEN.Tween(hand.position)
+                .to({y: objPos.y}, 400)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onComplete(function() {
+                    THREE.SceneUtils.attach(hand, scope.scene, scope.camera);
+                    
+                    new TWEEN.Tween(hand.rotation)
+                    .to({x: -1, y: 0.18, z: -0.2}, 400)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .start();
+
+                    new TWEEN.Tween(hand.position)
+                    .to({x: oldPos.x, y: oldPos.y, z: oldPos.z}, 400)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .onComplete(function() {
+                        scope.labGuide.nextInteractiveStep();
+                    })
+                    .start();
+                })
+                .start();
+            })
+            .start();
+        })
+        .start();
+    }
+
+    function useEyeDropper(hand, object) {
+        var eyedropper = scope.labwares.getNonInteractiveLabware('eyedropper');
+        hand.add(eyedropper);
+
+        eyedropper.position.set(-0.03, 0.035, -0.007);
+        eyedropper.rotation.set(-1.9, 0.15, -0.02);
+        eyedropper.scale.set(eyedropper.scaleMultiplier / hand.scaleMultiplier, eyedropper.scaleMultiplier / hand.scaleMultiplier, eyedropper.scaleMultiplier / hand.scaleMultiplier);
+
+        hand.rotation.set(-1.2, 0.11, 0);
+    }
+
+    function useStirringRod() {
+
     }
 }
