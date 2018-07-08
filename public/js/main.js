@@ -31,8 +31,8 @@ function init() {
     container.appendChild(renderer.domElement);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableZoom = false;
-    controls.enablePan = false;
+    // controls.enableZoom = false;
+    // controls.enablePan = false;
     controls.enableDamping = true;
     controls.dampingFactor = 0.2;
     controls.rotateSpeed = 0.2;

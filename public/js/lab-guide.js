@@ -104,7 +104,6 @@ LabGuide = function(gui, labScene) {
         // We need to decrease the interactiveStep by 1
         // to get the correct guideText
         if (interactiveStep > interactive.steps.length - 1) {
-            console.log("Eos");
             scope.lessons.readyForNextStep = true;
             enableInteractingWithLabware = false;
         }
@@ -213,7 +212,9 @@ LabGuide = function(gui, labScene) {
             document.getElementById("guide-tab").style.opacity = 1;
             document.getElementById("guide-tab").style.pointerEvents = "auto";
 
-            tablet.parent.children[1].visible = false;
+            if (tablet.parent.children[1]) {
+                tablet.parent.children[1].visible = false;
+            }
 
             guideLock = true;
             if (scope.labScene.periodicTable.secondSetEnabled) {
@@ -264,7 +265,9 @@ LabGuide = function(gui, labScene) {
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
 
-        INTERSECTED.parent.children[1].visible = true;
+        if (tablet.parent.children[1]) {
+            tablet.parent.children[1].visible = true;
+        };
 
         guideLock = false;
         scope.currentPos = scope.prevPos;
@@ -345,7 +348,8 @@ LabGuide = function(gui, labScene) {
                         child.material.side = THREE.DoubleSide;
                     }
                 });
-                object.scale.set(20, 20, 20);
+                object.scaleMultiplier = 20;
+                object.scale.set(object.scaleMultiplier, object.scaleMultiplier, object.scaleMultiplier);
 
                 object.rotation.x = -1.25;
                 object.rotation.y = -0.5;
@@ -423,7 +427,6 @@ LabGuide = function(gui, labScene) {
         if (INTERSECTED && INTERSECTED.name != scope.currentPos) {
             switch(INTERSECTED.name) {
                 case "guide-tab": {
-                    console.log(scope.currentPos);
                     scope.prevPos = scope.currentPos;
                     scope.currentPos = "guide-tab";
                     hideInfoPanel();
@@ -523,6 +526,9 @@ LabGuide = function(gui, labScene) {
 
         if (step.action == "reaction") {
             var target = scope.labScene.labwares.interactingTargets[step.target - 1];
+            var object = target.children[0];
+            object.scaleMultiplier = target.scaleMultiplier;
+            object.container = labware.name;
 
             switch (step.reaction.type) {
                 case "change-texture": {
@@ -554,43 +560,37 @@ LabGuide = function(gui, labScene) {
 
                     break;
                 }
-                case 'evaporate': {
-                    switch (labware.name) {
-                        case 'test-tube': {
-                            var object = target.children[0];
-                            object.container = labware.name;
+                case 'effervescence': {
+                    var anim;
 
-                            if (labware.reversed) {
-                                object.reversed = true;
-                            }
-
-                            setTimeout(function() {
-                                scope.animation.getParticleSystem("bubble", object);
-                            }, 1000);
-
-                            break;
-                        }
-                        case 'retort': {
-                            var object = target.children[2];
-                            object.container = labware.name;
-
-                            setTimeout(function() {
-                                scope.animation.getParticleSystem("bubble", object);
-                            }, 1000);
+                    switch (step.reaction.case) {
+                        case 'exo': {
+                            anim = 'exo-bubble';
+                            object.cube = target.children[target.children.length - 1];
 
                             break;
                         }
                         default: {
-                            var object = target.children[0];
-                            object.container = labware.name;
+                            anim = 'verticle-bubble';
 
+                            break;
+                        };
+                    }
+
+                    switch (labware.name) {
+                        case 'retort': {
+                            object = target.children[2];
+
+                            scope.animation.getParticleSystem(anim, object);
+
+                            break;
+                        }
+                        default: {
                             if (labware.reversed) {
                                 object.reversed = true;
                             }
 
-                            setTimeout(function() {
-                                scope.animation.getParticleSystem("bubble", object);
-                            }, 1000);
+                            scope.animation.getParticleSystem(anim, object);
 
                             break;
                         };
@@ -598,10 +598,22 @@ LabGuide = function(gui, labScene) {
 
                     break;
                 }
+                case 'smoke': {
+                    scope.animation.getParticleSystem('smoke', object);
+
+                    break;
+                }
+                case 'flare': {
+                    object.cube = target.children[target.children.length - 1];
+
+                    scope.animation.getParticleSystem('flare', object);
+                }
                 default: break;
             }
 
-            scope.nextInteractiveStep();
+            setTimeout(function() {
+                scope.nextInteractiveStep();
+            }, 2000);
         };
     }
 
