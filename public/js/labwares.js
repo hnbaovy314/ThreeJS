@@ -40,7 +40,7 @@ Labwares = function(labScene, gui) {
         if (data.placed == "horizontal") {
             labware.rotation.x = -Math.PI / 2;
         }
-        
+
         if (labware) {
             scope.interactingTargets.push(labware);
             return labware;
@@ -118,7 +118,7 @@ Labwares = function(labScene, gui) {
             var anotherTube = object.clone();
             anotherTube.boundingBox = new THREE.Box3().setFromObject(anotherTube);
             fillLabware(anotherTube, {container: "test-tube", color: 0xFF0000, form: "liquid", fillScale: 2 /5});
-            
+
             object.scaleMultiplier = 3;
             object.name = "test-tube";
             scope.labScene.previewInfo["test-tube"] = {
@@ -144,7 +144,7 @@ Labwares = function(labScene, gui) {
         .load("/models/labware/flask.obj", function(object) {
             var anotherFlask = object.clone();
             anotherFlask.position.set(-45, 21, -25);
-            
+
             object.traverse(function(child) {
                 if (child instanceof THREE.Mesh) {
                     child.castShadow = true;
@@ -218,7 +218,7 @@ Labwares = function(labScene, gui) {
                         child.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-offsetX, -offsetY, -offsetZ));
                     }
                 });
-                
+
                 object1.add(object2);
                 object1.rotation.y = Math.PI * 3 / 4;
                 object2.position.x -= 2;
@@ -241,7 +241,7 @@ Labwares = function(labScene, gui) {
                 object1.scale.set(object1.scaleMultiplier, object1.scaleMultiplier, object1.scaleMultiplier);
                 var height = object1.boundingBox.max.y - object1.boundingBox.min.y;
                 object1.position.set(-44, 19.75 + height * object1.scaleMultiplier / 2, -40);
-                
+
                 object1.enableInfo = true;
                 labwares[object1.name] = object1;
                 scope.labScene.raycastTarget.push(object1);
@@ -251,7 +251,7 @@ Labwares = function(labScene, gui) {
 
         // Load the beaker
         new THREE.OBJLoader()
-        .load("/models/labware/beaker.obj", function(object) {    
+        .load("/models/labware/beaker.obj", function(object) {
             object.traverse(function(child) {
                 if (child instanceof THREE.Mesh) {
                     child.castShadow = true;
@@ -270,7 +270,7 @@ Labwares = function(labScene, gui) {
                     child.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-offsetX, -offsetY, -offsetZ));
                 }
             });
-           
+
             object.name = "beaker";
             scope.labScene.previewInfo["beaker"] = {
                 name: "Beaker",
@@ -332,7 +332,7 @@ Labwares = function(labScene, gui) {
 
             new THREE.OBJLoader()
             .setPath('models/samples/')
-            .load('glass.obj', function(object2) { 
+            .load('glass.obj', function(object2) {
                 object2.traverse(function(child) {
                     if (child instanceof THREE.Mesh) {
                         child.castShadow = true;
@@ -408,7 +408,7 @@ Labwares = function(labScene, gui) {
                     .load('trashbin.obj', function(object) {
                         object.traverse(function(child) {
                             if (child instanceof THREE.Mesh) {
-                                child.material.color.setHex(0x696969);                            
+                                child.material.color.setHex(0x696969);
                             }
                         });
 
@@ -473,7 +473,7 @@ Labwares = function(labScene, gui) {
                                         material.map = texture;
                                         material.needsUpdate = true;
                                     }
-                                );   
+                                );
                             } else {
                                 material.color = new THREE.Color(data.color);
                                 material.needsUpdate = true;
@@ -495,12 +495,12 @@ Labwares = function(labScene, gui) {
                             mergedGeometry.merge(geometry);
                             geometry.translate(0, 0, depth * 4);
                             mergedGeometry.merge(geometry);
-                            geometry.translate(0, 0, -depth * 2);    
+                            geometry.translate(0, 0, -depth * 2);
                             geometry.rotateY(Math.PI / 2);
                             geometry.translate(-width * 2, 0, 0);
                             mergedGeometry.merge(geometry);
                             geometry.translate(width * 4, 0, 0);
-                            mergedGeometry.merge(geometry);                      
+                            mergedGeometry.merge(geometry);
 
                             var tray = new THREE.Mesh(
                                 mergedGeometry,
@@ -528,12 +528,12 @@ Labwares = function(labScene, gui) {
                             mergedGeometry.merge(geometry);
                             geometry.translate(0, 0, depth * 4 * 0.95);
                             mergedGeometry.merge(geometry);
-                            geometry.translate(0, 0, -depth * 2 * 0.95);    
+                            geometry.translate(0, 0, -depth * 2 * 0.95);
                             geometry.rotateY(Math.PI / 2);
                             geometry.translate(-width * 2 * 0.95, 0, 0);
                             mergedGeometry.merge(geometry);
                             geometry.translate(width * 4 * 0.95, 0, 0);
-                            mergedGeometry.merge(geometry);        
+                            mergedGeometry.merge(geometry);
                             geometry = new THREE.CylinderGeometry((width / 2) * 0.9, (width / 2) * 0.9, height / 3, 32, 32);
                             geometry.translate(0, -height / 6, 0);
                             mergedGeometry.merge(geometry);
@@ -551,7 +551,7 @@ Labwares = function(labScene, gui) {
                                         material.map = texture;
                                         material.needsUpdate = true;
                                     }
-                                );   
+                                );
                             } else {
                                 material.color = new THREE.Color(data.color);
                                 material.needsUpdate = true;
@@ -582,7 +582,7 @@ Labwares = function(labScene, gui) {
                         geometry = new THREE.SphereGeometry(width / 2.2, 32, 32);
                         geometry.translate(0, -fillHeight / 2, 0);
                         mergeGeometry.merge(geometry);
-                        
+
                         var material = new THREE.MeshPhongMaterial();
 
                         var fill = new THREE.Mesh(mergeGeometry, material);
@@ -637,7 +637,7 @@ Labwares = function(labScene, gui) {
                                     material.map = texture;
                                     material.needsUpdate = true;
                                 }
-                            );   
+                            );
                         } else {
                             material.color =  new THREE.Color(data.color);
                             material.needsUpdate = true;
@@ -684,7 +684,7 @@ Labwares = function(labScene, gui) {
                 switch (data.form) {
                     case 'liquid': {
                         var fillHeight = height * 1 / 3 - 0.1;
-                        
+
                         var mergedGeometry = new THREE.Geometry();
                         var geometry = new THREE.SphereGeometry(fillHeight / 2, 32, 32, 0, Math.PI);
                         mergedGeometry.merge(geometry);
@@ -702,7 +702,7 @@ Labwares = function(labScene, gui) {
                                     material.map = texture;
                                     material.needsUpdate = true;
                                 }
-                            );   
+                            );
                         } else {
                             material.color = new THREE.Color(data.color);
                             material.needsUpdate = true;
@@ -713,7 +713,10 @@ Labwares = function(labScene, gui) {
                         fill.rotation.x = Math.PI / 2;
 
                         labware.add(fill);
-                        
+
+                        break;
+                    }
+                    case 'solid': {
                         break;
                     }
                     default: break;
@@ -740,7 +743,7 @@ Labwares = function(labScene, gui) {
                                     material.map = texture;
                                     material.needsUpdate = true;
                                 }
-                            );   
+                            );
                         } else {
                             material.color =  new THREE.Color(data.color);
                             material.needsUpdate = true;
