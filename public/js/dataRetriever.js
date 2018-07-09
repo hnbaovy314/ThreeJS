@@ -111,4 +111,19 @@ DataRetriever = function() {
         });
         return result;
     }
+
+    this.checkFileExist = function(filePath) {
+        var result = [];
+        $.ajax({
+          url: filePath,
+          async: false,
+          success: function(data) {
+            result = true;
+            },
+            error: function(data) {
+                result = false;
+            }
+        });
+        return result;
+    }
 }

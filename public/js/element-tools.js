@@ -15,9 +15,16 @@ ElementTools = function () {
         var img = document.createElement('img');
 
         imgWrapper.setAttribute('id', 'element-info-img');
-        imgWrapper.setAttribute('class', 'img-wrapper');
-        img.setAttribute('id', 'element-img');
-        img.setAttribute('src', `./img/elements/${atomicNumber}.jpg`);
+        if (dataRetriever.checkFileExist(`./img/elements/${atomicNumber}.jpg`)) {
+            imgWrapper.setAttribute('class', 'img-wrapper');
+            img.setAttribute('id', 'element-img');
+            img.setAttribute('src', `./img/elements/${atomicNumber}.jpg`);
+        }
+        else {
+            imgWrapper.setAttribute('class', 'svg-image');
+            img.setAttribute('src', './img/ct/unk.svg');
+        }
+
 
         imgWrapper.appendChild(img);
         div.appendChild(imgWrapper);
