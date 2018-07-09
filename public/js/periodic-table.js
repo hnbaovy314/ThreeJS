@@ -18,8 +18,8 @@ PeriodicTable = function(labScene) {
     const elementTools = new ElementTools();
     const eventListener = new PtEventListener();
     const previewPanelSize = 200;
-    const elementCanvasWidth = window.innerWidth * 0.55 * 0.7;
-    const elementCanvasHeight = window.innerHeight * 0.75 * 0.93;
+    const elementCanvasWidth = 700 * 0.7;
+    const elementCanvasHeight = 480 * 0.93;
     var scope = this;
 
     //Enable Element view
@@ -188,12 +188,6 @@ PeriodicTable = function(labScene) {
         return result;
     }
 
-    function onWindowResize() {
-        currentCamera.aspect = window.innerWidth / window.innerHeight;
-        currentCamera.updateProjectionMatrix();
-        currentRenderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
     function addColumn(divId) {
         // Add left and right column
         var mainDiv = document.getElementById(divId);
@@ -274,13 +268,11 @@ PeriodicTable = function(labScene) {
             scope.ptEnabled = false;
             scope.labGuide.currentPos = 'guide-tab';
             scope.labGuide.bringUpGuideTab();
-            $('#gtab-content').innerHTML = '';
         }
     }
 
     this.loadElementInfo = function() {
-        var infoTabContent = document.getElementById('gtab-content');
-        infoTabContent.innerHTML = '';
+        $('#gtab-content').innerHTML = '';
         addColumn('gtab-content');
         var erContainer = document.createElement('div'); // Element Renderer Container
         erContainer.setAttribute('id', 'ds-er-container');

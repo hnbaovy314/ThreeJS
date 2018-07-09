@@ -83,4 +83,32 @@ DataRetriever = function() {
         });
         return result;
     }
+
+    this.getLesson = function(lessonName) {
+        var result = {};
+        $.ajax({
+            url: '/getL',
+            type: 'GET',
+            data: {'name': lessonName},
+            async: false,
+            success: function(data) {
+                result = data;
+            }
+        });
+        return result;
+    }
+
+    this.getAllLessons = function() {
+        var result = [];
+        $.ajax({
+          url: '/getLs',
+          type: 'GET',
+          async: false,
+          success: function(data) {
+            console.log("Data received");
+            result = data;
+          }
+        });
+        return result;
+    }
 }

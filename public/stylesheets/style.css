@@ -38,8 +38,8 @@ h1, h2 {
 /* Guide Tab */
 #guide-tab {
     position: absolute;
-    width: 55vw;
-    height: 75vh;
+    width: 700px;
+    height: 480px;
     top: 11vh;
     left: 0;
     right: 0;
@@ -86,6 +86,31 @@ h1, h2 {
 
 #guide-tab #gtab-content-body {
     padding: 10px;
+}
+
+#guide-tab #gtab-content-body li{
+    list-style-type: none;
+}
+
+#guide-tab #gtab-content-body li a:link{
+    width: 90%;
+    background-color: #f2e3c7;
+    color: #343642;
+    border: 2px solid #348899;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin: 2px 10px;
+}
+
+#guide-tab #gtab-content-body li a:visited{
+    border-color: #343642;
+}
+
+#guide-tab #gtab-content-body li a:hover{
+    background-color: #348899;
+    color: #962d3e;
 }
 
 #guide-tab #gtab-content #gtab-back-to-menu {

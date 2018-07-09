@@ -218,6 +218,7 @@ LabGuide = function(gui, labScene) {
 
             guideLock = true;
             if (scope.labScene.periodicTable.secondSetEnabled) {
+                $('#gtab-content').innerHTML = '';
                 setTimeout(function() {
                     scope.labScene.periodicTable.switch2Local();
                     scope.labScene.periodicTable.loadElementInfo();
