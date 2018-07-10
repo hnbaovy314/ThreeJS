@@ -18,8 +18,8 @@ PeriodicTable = function(labScene) {
     const elementTools = new ElementTools();
     const eventListener = new PtEventListener();
     const previewPanelSize = 200;
-    const elementCanvasWidth = 700 * 0.7;
-    const elementCanvasHeight = 480 * 0.9;
+    const elementCanvasWidth = 1020 * 0.7;
+    const elementCanvasHeight = 720 * 0.9;
     var scope = this;
 
     //Enable Element view
@@ -31,7 +31,7 @@ PeriodicTable = function(labScene) {
 
     var elementTable, previewPanel;
     var container, stats, raycaster, meshArr = []; // Array to hold all meshes that needs disposing
-    var currentCamera, defaultCamera, currentScene, currentRenderer, currentControls, defaultControls, currentRaycastTarget;
+    var currentCamera, defaultCamera, currentScene, currentRenderer, currentControls, defaultControls, enableRaycast = true;
     var tableScene, tableRenderer;
     var currentMouse,
     INTERSECTED;
@@ -103,7 +103,6 @@ PeriodicTable = function(labScene) {
         scope.labScene.add(helper);
 
         scope.labScene.raycastTarget.push(boxTable);
-        currentRaycastTarget = periodicTable;
         //get the default setting
         currentCamera = scope.labScene.camera;
         currentScene = scope.labScene.scene;
@@ -166,6 +165,12 @@ PeriodicTable = function(labScene) {
         document.addEventListener('click', onTableBoxClick, false);
         window.addEventListener('resize', onWindowResize, false);
 
+    }
+
+    this.resetRaycastTarget = function() {
+        enableRaycast = true;
+        console.log("Reset");
+        scope.update();
     }
 
     function calcEPerShell(){
@@ -234,7 +239,6 @@ PeriodicTable = function(labScene) {
         scope.labScene.scene = currentScene;
         scope.labScene.controls = currentControl;
         scope.labScene.renderer = currentRenderer;
-        currentRaycastTarget = periodicTable;
         destroyElementModel();
     }
 
@@ -281,7 +285,7 @@ PeriodicTable = function(labScene) {
         infoTabContent.appendChild(erContainer);
         elementRenderer.setSize(elementCanvasWidth, elementCanvasHeight);
 
-        currentRaycastTarget = null;
+        enableRaycast = false;
         // INTERSECTED.children[0].material.opacity = 0.25;
         var atomicNumber = INTERSECTED.name.slice(3);
         var element = elements[atomicNumber-1];
@@ -693,10 +697,11 @@ PeriodicTable = function(labScene) {
     }
 
     this.update = function() {
+        console.log(enableRaycast);
         //find intersections
-        if (currentRaycastTarget) {
+        if (enableRaycast) {
             raycaster.setFromCamera(currentMouse, currentCamera);
-            var intersects = raycaster.intersectObjects(currentRaycastTarget);
+            var intersects = raycaster.intersectObjects(periodicTable);
             if (intersects.length > 0) {
                 if (INTERSECTED != intersects[0].object) {
                     if (INTERSECTED) {

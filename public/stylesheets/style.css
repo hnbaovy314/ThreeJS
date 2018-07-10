@@ -38,8 +38,8 @@ h1, h2 {
 /* Guide Tab */
 #guide-tab {
     position: absolute;
-    width: 700px;
-    height: 480px;
+    width: 1020px;
+    height: 720px;
     top: 11vh;
     left: 0;
     right: 0;
@@ -287,7 +287,7 @@ h1, h2 {
     margin: 0;
     position: absolute;
     width: 30%;
-    height: 90%;
+    height: 93%;
     border-style: solid;
     border-width: 2px;
     border-color: #2c3e50;

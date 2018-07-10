@@ -23,6 +23,7 @@ LabGuide = function(gui, labScene) {
         scope.createGuideText(initGuideTexts);
 
         loadGuideTab();
+        guideTabContent = document.getElementById('gtab-content').innerHTML;
 
         scope.animation.init();
         scope.lessons.init();
@@ -230,7 +231,6 @@ LabGuide = function(gui, labScene) {
         });
 
         //get hand
-
         scope.lessons.checkNextStep();
     }
 
@@ -238,6 +238,13 @@ LabGuide = function(gui, labScene) {
     this.turnOffGuideTab = function(event) {
         event.preventDefault();
 
+        if (scope.prevPos == "element-table") {
+            scope.labScene.periodicTable.ptEnabled = true;
+            scope.labScene.periodicTable.resetRaycastTarget();
+            document.getElementById('gtab-content').innerHTML = guideTabContent;
+            scope.getMainMenu("lessons");
+        }
+        
         if (scope.labScene.periodicTable.secondSetEnabled) {
             scope.labScene.periodicTable.secondSetEnabled = false;
             scope.labScene.periodicTable.ptEnabled = true;
@@ -314,6 +321,8 @@ LabGuide = function(gui, labScene) {
 
     var guideLock = false, mouseClickLock = false;
     var enableInteractingWithLabware = false, interactive = null, interactiveStep = 0, INTERSECTED = null;
+
+    var guideTabContent;
 
     function loadGuideTab() {
         // Load the tablet

@@ -416,29 +416,29 @@ LabScene = function(gui, camera, scene, renderer, controls) {
         scope.scene.add(gridHelper2);
         // ----------------------------------------------------
         // Load the fridge
-        // new THREE.MTLLoader()
-        // .setPath('/models/')
-        // .load('fridge.mtl', function(materials) {
-        //     materials.preload();
-        //     new THREE.OBJLoader()
-        //         .setMaterials(materials)
-        //         .setPath('models/')
-        //         .load('fridge.obj', function(object) {
-        //             object.scale.set(0.5, 0.5, 0.5);
-        //             object.castShadow = true;
-        //
-        //             object.position.set(-37.5, 0, 35);
-        //             object.rotation.y = Math.PI / 2;
-        //
-        //             object.children[10].material[0].color.setHex(0x4C4C4C);
-        //             object.children[35].material[0].color.setHex(0x4C4C4C);
-        //
-        //             object.children[10].castShadow = true;
-        //             object.children[35].castShadow = true;
-        //
-        //             scope.scene.add(object);
-        //         });
-        // });
+        new THREE.MTLLoader()
+        .setPath('/models/')
+        .load('fridge.mtl', function(materials) {
+            materials.preload();
+            new THREE.OBJLoader()
+                .setMaterials(materials)
+                .setPath('models/')
+                .load('fridge.obj', function(object) {
+                    object.scale.set(0.5, 0.5, 0.5);
+                    object.castShadow = true;
+        
+                    object.position.set(-37.5, 0, 35);
+                    object.rotation.y = Math.PI / 2;
+        
+                    object.children[10].material[0].color.setHex(0x4C4C4C);
+                    object.children[35].material[0].color.setHex(0x4C4C4C);
+        
+                    object.children[10].castShadow = true;
+                    object.children[35].castShadow = true;
+        
+                    scope.scene.add(object);
+                });
+        });
 
         // Load the working desk
         new THREE.OBJLoader()
@@ -470,22 +470,22 @@ LabScene = function(gui, camera, scene, renderer, controls) {
             scope.scene.add(object);
         });
 
-        // // Load the fire extinguisher
-        // new THREE.MTLLoader()
-        // .setPath('/models/extinguisher/')
-        // .load('extinguisher.mtl', function(materials) {
-        //     materials.preload();
-        //     new THREE.OBJLoader()
-        //         .setMaterials(materials)
-        //         .setPath('models/extinguisher/')
-        //         .load('extinguisher.obj', function(object) {
-        //             object.scale.set(10, 10, 10);
-        //             object.position.set(24, 26.5, -48.5);
-        //             object.children[0].castShadow = true;
-        //
-        //             scope.scene.add(object);
-        //         });
-        // });
+        // Load the fire extinguisher
+        new THREE.MTLLoader()
+        .setPath('/models/extinguisher/')
+        .load('extinguisher.mtl', function(materials) {
+            materials.preload();
+            new THREE.OBJLoader()
+                .setMaterials(materials)
+                .setPath('models/extinguisher/')
+                .load('extinguisher.obj', function(object) {
+                    object.scale.set(10, 10, 10);
+                    object.position.set(24, 26.5, -48.5);
+                    object.children[0].castShadow = true;
+        
+                    scope.scene.add(object);
+                });
+        });
 
         // Load the board
         new THREE.STLLoader()
@@ -518,37 +518,37 @@ LabScene = function(gui, camera, scene, renderer, controls) {
             });
         });
 
-        // // Load the city
-        // new THREE.MTLLoader()
-        // .setPath('/models/city/center/')
-        // .load('city.mtl', function(materials) {
-        //     materials.preload();
-        //     new THREE.OBJLoader()
-        //         .setMaterials(materials)
-        //         .setPath('models/city/center/')
-        //         .load('city.obj', function(object) {
-        //             object.scale.set(0.5, 0.5, 0.5);
-        //             object.position.set(-225, -535, 120);
-        //             object.rotation.y = -Math.PI;
-        //
-        //             scope.scene.add(object);
-        //         });
-        // });
-        //
-        // new THREE.MTLLoader()
-        // .setPath('/models/city/')
-        // .load('city2.mtl', function(materials) {
-        //     materials.preload();
-        //     new THREE.OBJLoader()
-        //         .setMaterials(materials)
-        //         .setPath('models/city/')
-        //         .load('city2.obj', function(object) {
-        //             object.scale.set(12, 12, 12);
-        //             object.position.set(1000, -550, 2100);
-        //             object.rotation.y = Math.PI;
-        //             scope.scene.add(object);
-        //         });
-        // });
+        // Load the city
+        new THREE.MTLLoader()
+        .setPath('/models/city/center/')
+        .load('city.mtl', function(materials) {
+            materials.preload();
+            new THREE.OBJLoader()
+                .setMaterials(materials)
+                .setPath('models/city/center/')
+                .load('city.obj', function(object) {
+                    object.scale.set(0.5, 0.5, 0.5);
+                    object.position.set(-225, -535, 120);
+                    object.rotation.y = -Math.PI;
+        
+                    scope.scene.add(object);
+                });
+        });
+        
+        new THREE.MTLLoader()
+        .setPath('/models/city/')
+        .load('city2.mtl', function(materials) {
+            materials.preload();
+            new THREE.OBJLoader()
+                .setMaterials(materials)
+                .setPath('models/city/')
+                .load('city2.obj', function(object) {
+                    object.scale.set(12, 12, 12);
+                    object.position.set(1000, -550, 2100);
+                    object.rotation.y = Math.PI;
+                    scope.scene.add(object);
+                });
+        });
 
         // Create an ocean
         new THREE.TextureLoader()
@@ -572,20 +572,20 @@ LabScene = function(gui, camera, scene, renderer, controls) {
         });
 
         // Create a skydome
-        // new THREE.TextureLoader()
-        // .load('/textures/sky.jpg', function(texture) {
-        //     var skydome = new THREE.Mesh(
-        //         new THREE.SphereBufferGeometry(4000, 100, 100),
-        //         new THREE.MeshBasicMaterial({
-        //             map: texture,
-        //             side: THREE.BackSide
-        //         })
-        //     )
-        //
-        //     scope.scene.add(skydome);
-        // });
-        //
-        // scope.scene.fog = new THREE.Fog(0xFFFFFF, 0.1, 5000);
+        new THREE.TextureLoader()
+        .load('/textures/sky.jpg', function(texture) {
+            var skydome = new THREE.Mesh(
+                new THREE.SphereBufferGeometry(4000, 100, 100),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    side: THREE.BackSide
+                })
+            )
+        
+            scope.scene.add(skydome);
+        });
+        
+        scope.scene.fog = new THREE.Fog(0xFFFFFF, 0.1, 5000);
     }
 
     function loadInteractiveAreas() {

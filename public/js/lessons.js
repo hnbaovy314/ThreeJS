@@ -9,6 +9,7 @@ Lessons = function(labGuide) {
     this.readyForNextStep = false;
 
     this.listUnit = function() {
+        document.getElementById("gtab-content-body").innerHTML = '';
         document.getElementById("gtab-content-body").innerHTML = '<ul>';
 
         for (var unit in units) {
@@ -56,13 +57,6 @@ Lessons = function(labGuide) {
             // document.getElementById("gtab-pagination-page").innerHTML = page + ' / ' + guideTexts.length;
             gtabContentBody.innerHTML = stepTextContent[stepTextPage];
         });
-
-        document.getElementById('gtab-back-to-menu').addEventListener("click", function(event) {
-            event.preventDefault();
-
-            reset();
-            scope.labGuide.getMainMenu('lessons');
-        })
 
         document.getElementById("gtab-back-to-scene").addEventListener("click", scope.labGuide.turnOffGuideTab, false);
 
@@ -153,6 +147,16 @@ Lessons = function(labGuide) {
     var running = false;
 
     function startUnit(event) {
+        document.getElementById('gtab-back-to-menu').addEventListener("click", function(event) {
+            event.preventDefault();
+
+            reset();
+            scope.labGuide.getMainMenu('lessons');
+        })
+        
+        gtabContentHeader = document.getElementById('gtab-content-header');
+        gtabContentBody = document.getElementById('gtab-content-body');
+
         scope.labGuide.moveToDesk();
         scope.labGuide.prevPos = "lab-desk";
 
