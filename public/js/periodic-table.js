@@ -19,7 +19,7 @@ PeriodicTable = function(labScene) {
     const eventListener = new PtEventListener();
     const previewPanelSize = 200;
     const elementCanvasWidth = 700 * 0.7;
-    const elementCanvasHeight = 480 * 0.93;
+    const elementCanvasHeight = 480 * 0.9;
     var scope = this;
 
     //Enable Element view
@@ -272,7 +272,8 @@ PeriodicTable = function(labScene) {
     }
 
     this.loadElementInfo = function() {
-        $('#gtab-content').innerHTML = '';
+        var infoTabContent = document.getElementById('gtab-content');
+        infoTabContent.innerHTML = '';
         addColumn('gtab-content');
         var erContainer = document.createElement('div'); // Element Renderer Container
         erContainer.setAttribute('id', 'ds-er-container');
@@ -641,8 +642,6 @@ PeriodicTable = function(labScene) {
         ctx.fillStyle = "#A49A87";
         ctx.font = "bold 64pt helvetica";
         ctx.fillText("PERIODIC TABLE OF ELEMENTS", canvas.width / 2, canvas.height / 2);
-        ctx.font = "bold 28pt helvetica";
-        ctx.fillText("By Mashiron (and some insignificant one)", canvas.width / 2, canvas.height / 1.25);
 
         var texture = new THREE.Texture(canvas);
         texture.needsUpdate = true;
