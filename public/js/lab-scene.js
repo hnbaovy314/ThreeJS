@@ -117,7 +117,26 @@ LabScene = function(gui, camera, scene, renderer, controls) {
                     new THREE.MeshPhongMaterial()
                 )
 
-                target.position.y = workAreaCoord.y + 5 + (boundingBox.max.y - boundingBox.min.y) / 2;
+                if (labwares[content.stand[i] - 1].placed == "horizontal") {
+                    target.position.y = workAreaCoord.y + 5 + (boundingBox.max.y - boundingBox.min.y) / 2;
+                } else {
+                    var horizontalBar = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.1, 0.1, 0.75, 32, 32),
+                        new THREE.MeshPhongMaterial() 
+                    )
+
+                    horizontalBar.rotation.x = Math.PI / 2;                 
+                    horizontalBar.position.x = center.x;
+                    horizontalBar.position.y = center.y + 1;
+                    horizontalBar.position.z = center.z + 0.3;
+
+                    target.position.y += 1;
+                    target.position.z += 1;
+
+                    scope.scene.add(horizontalBar);
+                    miscMesh.push(stand);
+                }
+
                 stand.position.x = center.x;
                 stand.position.y = workAreaCoord.y + 2.5;
                 stand.position.z = center.z - (boundingBox.max.z - boundingBox.min.z) / 5;
@@ -181,7 +200,7 @@ LabScene = function(gui, camera, scene, renderer, controls) {
                         secondCenter.z + 0.2),
                     new THREE.Vector3(
                         secondCenter.x,
-                        secondCenter.y,
+                        secondCenter.y - 1,
                         secondCenter.z)
                 ]);
             } else {

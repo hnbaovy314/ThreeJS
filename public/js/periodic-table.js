@@ -251,6 +251,8 @@ PeriodicTable = function(labScene) {
         scope.labScene.scene = elementScene;
         scope.labScene.controls = elementControl;
         scope.labScene.renderer = elementRenderer;
+
+        console.log(elementControl);
     }
 
     this.add2LocalCamera = function(object) {
@@ -489,6 +491,9 @@ PeriodicTable = function(labScene) {
         orbit.add(line);
         orbit.add(electronMesh);
 
+        orbit.rotation.x = Math.random() * Math.PI * 2;
+        orbit.rotation.y = Math.random() * Math.PI * 2;
+
         var tween = new TWEEN.Tween(orbit.rotation)
             .to({z: '+' + Math.PI * 8 / radius}, 10000)
             .repeat(Infinity)
@@ -697,7 +702,6 @@ PeriodicTable = function(labScene) {
     }
 
     this.update = function() {
-        console.log(enableRaycast);
         //find intersections
         if (enableRaycast) {
             raycaster.setFromCamera(currentMouse, currentCamera);

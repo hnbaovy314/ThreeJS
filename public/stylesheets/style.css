@@ -63,7 +63,7 @@ h1, h2 {
     display: flex;
     flex-direction: row;
     align-items: center;
-    background: #00BFFF;
+    background: #2C3E50;
     color: white;
     padding: 5px 0;
 }
@@ -85,6 +85,8 @@ h1, h2 {
 }
 
 #guide-tab #gtab-content-body {
+    font-size: 24px;
+    line-height: 1.5;
     padding: 10px;
 }
 
@@ -324,7 +326,7 @@ h1, h2 {
 }
 
 #left-info-btn .info-button {
-    background-color: #e3cda4;
+    background-color: #3498DB;
     text-align: center;
     display: inline-block;
     margin: 0;
@@ -334,11 +336,12 @@ h1, h2 {
 }
 
 #left-info-btn .info-button:hover {
-    background-color: #c77966;
+    background-color: #2980B9;
 }
 
 #left-info-btn .infoBtn-focus {
-    background-color: #268487;
+    background-color: #2C3E50;
+    color: #ECF0F1;
 }
 
 #left-info-btn .info-button i {
@@ -400,4 +403,14 @@ h1, h2 {
     position: absolute;
     z-index: 999;
     margin: 0px 0px 5px 3px;
+}
+
+/* Zoom back button */
+#zoom-back-button {
+    position: absolute;
+    color: #FFFFFF;
+    font-size: 50px;
+    bottom: 20px;
+    right: 20px;
+    display: none;
 }

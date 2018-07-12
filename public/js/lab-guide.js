@@ -31,6 +31,9 @@ LabGuide = function(gui, labScene) {
 
         document.addEventListener('mousemove', onDocumentMouseMove, false);
         document.addEventListener('mousedown', onDocumentMouseDown, false);
+        
+        // Zoom back button
+        $("#zoom-back-button").click(zoomBack);
     }
 
     this.getMainMenu = function(section) {
@@ -101,9 +104,6 @@ LabGuide = function(gui, labScene) {
     this.nextInteractiveStep = function() {
         interactiveStep += 1;
 
-        // If the previous action is "reaction",
-        // We need to decrease the interactiveStep by 1
-        // to get the correct guideText
         if (interactiveStep > interactive.steps.length - 1) {
             scope.lessons.readyForNextStep = true;
             enableInteractingWithLabware = false;
@@ -173,7 +173,6 @@ LabGuide = function(gui, labScene) {
         scope.lessons.update();
         scope.labScene.update();
         scope.animation.update();
-        controls.update();
         if (scope.labScene.periodicTable.ptEnabled === true) {
             scope.labScene.periodicTable.setMouse(mouse);
             scope.labScene.periodicTable.update();
@@ -324,6 +323,8 @@ LabGuide = function(gui, labScene) {
 
     var guideTabContent;
 
+    var zoomInTargets = {};
+
     function loadGuideTab() {
         // Load the tablet
         new THREE.OBJLoader()
@@ -473,8 +474,36 @@ LabGuide = function(gui, labScene) {
             var labware = interactive.labwares[interactive.steps[interactiveStep].target - 1];
             if (INTERSECTED && INTERSECTED.contentId == labware.id) {
                 mouseClickLock = true;
+                INTERSECTED.labwareName = labware.name;
                 scope.animation.getInteractiveAnimation(interactive.steps[interactiveStep].action, INTERSECTED);
             }
+        }
+
+        if (INTERSECTED && zoomInTargets[INTERSECTED.name]) {
+            $("#zoom-back-button")[0].style.display = "initial";
+            mouseClickLock = true;
+            hideCameraChildren();
+            
+            var boundingBox = new THREE.Box3().setFromObject(INTERSECTED);
+            var center = boundingBox.getCenter();
+
+            new TWEEN.Tween(scope.labScene.camera.position)
+            .to({
+                x: boundingBox.max.x + 3,
+                y: center.y,
+                z: center.z
+            }, 300)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .start();
+
+            new TWEEN.Tween(scope.labScene.controls.target)
+            .to({
+                x: boundingBox.max.x + 2.9,
+                y: center.y,
+                z: center.z
+            }, 300)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .start();
         }
     }
 
@@ -571,6 +600,8 @@ LabGuide = function(gui, labScene) {
                     break;
                 }
                 case 'effervescence': {
+                    zoomInTargets[target.name] = target;
+
                     var anim;
 
                     switch (step.reaction.case) {
@@ -609,14 +640,27 @@ LabGuide = function(gui, labScene) {
                     break;
                 }
                 case 'smoke': {
+                    zoomInTargets[target.name] = target;
+
                     scope.animation.getParticleSystem('smoke', object);
 
                     break;
                 }
                 case 'flare': {
+                    zoomInTargets[target.name] = target;
+
                     object.cube = target.children[target.children.length - 1];
 
                     scope.animation.getParticleSystem('flare', object);
+
+                    break;
+                }
+                case 'precipitation': {
+                    zoomInTargets[target.name] = target;
+
+                    scope.animation.getParticleSystem('precipitation', object);
+
+                    break;
                 }
                 default: break;
             }
@@ -627,9 +671,27 @@ LabGuide = function(gui, labScene) {
         };
     }
 
+    function hideCameraChildren() {
+        scope.labScene.camera.children[0].visible = false;
+        scope.labScene.camera.children[1].visible = false;
+    }
+
+    function showCameraChildren() {
+        scope.labScene.camera.children[0].visible = true;
+        scope.labScene.camera.children[1].visible = true;
+    }
+
+    function zoomBack() {
+        scope.moveToDesk();
+        showCameraChildren();
+        $("#zoom-back-button")[0].style.display = "none";
+    }
+
     // ---------------------
     // Reset functions
     function resetInteractiveSettings() {
+        zoomInTargets = {};
+
         interactive = null;
         interactiveStep = 0;
         enableInteractingWithLabware = false;

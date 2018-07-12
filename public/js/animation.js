@@ -448,6 +448,80 @@ Animation = function(labGuide) {
                 
                 break;
             }
+            case "precipitation": {
+                // Test bubble effect (boiling?)
+                // create the particle variables
+                var particleCount = 500,
+                particles = new THREE.Geometry(),
+                pMaterial = new THREE.PointCloudMaterial({
+                    size: (boundingBox.max.x - boundingBox.min.x) * 0.1 * scale,
+                    transparent: true,
+                    // depthWrite: false
+                });
+
+                // now create the individual particles
+                for (var p = 0; p < particleCount; p++) {
+                    // create a particle with random position
+                    var pX = (Math.random() * (maxX - minX) + minX) * 0.9,
+                        pY = Math.random() * 0.25,
+                        pZ = (Math.random() * (maxZ - minZ) + minZ) * 0.9,
+                        particle = new THREE.Vector3(pX, pY, pZ);
+
+                    // add it to the geometry
+                    particles.vertices.push(particle);
+                }
+
+                // create the particle system
+                var particleSystem = new THREE.PointCloud(
+                    particles,
+                    pMaterial
+                );
+
+                particleSystem.boundingBox = {
+                    max: {
+                        x: maxX,
+                        y: maxY,
+                        z: maxZ
+                    },
+                    min: {
+                        x: minX,
+                        y: minY,
+                        z: minZ
+                    }
+                };
+
+                particleSystem.particleCount = particleCount;
+                particleSystem.stackHeight = 0.03;
+                particleSystem.position.set(
+                    center.x,
+                    center.y -= (boundingBox.max.y - boundingBox.min.y) / 2 - 0.25,
+                    center.z
+                );
+
+                particleSystem.updateFunc = function(pSystem) {
+                    var pCount = pSystem.particleCount;
+                    while (pCount--) {
+                        // get the particle
+                        var particle = pSystem.geometry.vertices[pCount];
+
+                        if (particle.y < pSystem.boundingBox.min.y / 8 + pSystem.stackHeight + 0.02) {
+                            if (pCount % 2 == 0) {
+                                pSystem.stackHeight += 0.001;
+                            }
+                            continue;
+                        } else {
+                            particle.y -= 0.001;
+                        }               
+                    }
+                    pSystem.geometry.verticesNeedUpdate = true;
+                }
+
+                // add it to the scene
+                scope.scene.add(particleSystem);
+                particleSystems.push(particleSystem);
+            
+                break;
+            }
             default: break;
         }
     }
@@ -498,6 +572,10 @@ Animation = function(labGuide) {
             }
             case "use-tongs": {
                 useTongs(hand, object);
+                break;
+            }
+            case "use-dropper": {
+                useEyeDropper(hand, object);
                 break;
             }
             default: break;
@@ -676,7 +754,7 @@ Animation = function(labGuide) {
         var objPos = {
             x: object.position.x + (objBoundingBox.max.x - objBoundingBox.min.x) / 3 ,
             y: object.position.y + (objBoundingBox.max.y - objBoundingBox.min.y) / 2 + 2,
-            z: object.position.z - (objBoundingBox.max.z - objBoundingBox.min.z) / 1.5,
+            z: object.position.z - (objBoundingBox.max.z - objBoundingBox.min.z) / 1.25,
         }
 
         THREE.SceneUtils.detach(hand, scope.camera, scope.scene);
@@ -697,6 +775,26 @@ Animation = function(labGuide) {
                             THREE.SceneUtils.detach(chemical, tool, scope.scene);
                             chemical.position.y = objBoundingBox.min.y + 0.4;
                             THREE.SceneUtils.attach(chemical, scope.scene, object);
+                        }
+                    }
+
+                    if (tool.name == "eyedropper") {
+                        if (!object.fill) {
+                            scope.labwares.fillLabware(object, {
+                                name: object.labwareName,
+                                form: "liquid",
+                                fillScale: 1/10
+                            })
+    
+                            object.fill = object.children[object.children.length - 1];
+                            object.fill.material.map = tool.children[tool.children.length - 1].material.map;
+                            
+                            object.fill.traverse(function(child) {
+                               if (child instanceof THREE.Mesh) {
+                                   child.material.transparent = true;
+                                   child.material.opacity = 0.5;
+                               } 
+                            });
                         }
                     }
                 };
@@ -1003,8 +1101,75 @@ Animation = function(labGuide) {
         eyedropper.position.set(-0.03, 0.035, -0.007);
         eyedropper.rotation.set(-1.9, 0.15, -0.02);
         eyedropper.scale.set(eyedropper.scaleMultiplier / hand.scaleMultiplier, eyedropper.scaleMultiplier / hand.scaleMultiplier, eyedropper.scaleMultiplier / hand.scaleMultiplier);
+        eyedropper.scaleMultiplier = eyedropper.scaleMultiplier / hand.scaleMultiplier;
 
-        hand.rotation.set(-1.2, 0.11, 0);
+        var eyedropperBoundingBox = new THREE.Box3().setFromObject(eyedropper);
+        var objBoundingBox = new THREE.Box3().setFromObject(object);
+
+        var oldPos = {
+            x: hand.position.x,
+            y: hand.position.y,
+            z: hand.position.z
+        };
+
+        var objPos = {
+            x: object.position.x + (objBoundingBox.max.x - objBoundingBox.min.x) / 2 ,
+            y: object.position.y + (objBoundingBox.max.y - objBoundingBox.min.y) / 2 + 2,
+            z: object.position.z - (objBoundingBox.max.z - objBoundingBox.min.z) / 2,
+        }
+
+        THREE.SceneUtils.detach(hand, scope.camera, scope.scene);
+        hand.rotation.set(-1.5, 0.2, 1.5);
+
+        new TWEEN.Tween(hand.position)
+        .to({x: objPos.x, y: objPos.y, z: objPos.z}, 400)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onComplete(function() {
+            new TWEEN.Tween(hand.position)
+            .to({y: objPos.y - 3}, 400)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .onComplete(function() {
+                var dropperFill = new THREE.Mesh(
+                    new THREE.CylinderGeometry(
+                        ((eyedropperBoundingBox.max.x - eyedropperBoundingBox.min.x) / 2) * eyedropper.scaleMultiplier,
+                        ((eyedropperBoundingBox.max.x - eyedropperBoundingBox.min.x) / 2) * eyedropper.scaleMultiplier,
+                        ((eyedropperBoundingBox.max.y - eyedropperBoundingBox.min.y) / 2) * eyedropper.scaleMultiplier,
+                        32, 32
+                    ),
+                    new THREE.MeshPhongMaterial()
+                );
+
+                var fill = object.children[object.children.length - 1];
+                if (fill.material.map) {
+                    dropperFill.material.map = fill.material.map;
+                }
+
+                eyedropper.add(dropperFill);
+                
+                new TWEEN.Tween(hand.position)
+                .to({y: objPos.y}, 400)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onComplete(function() {
+                    THREE.SceneUtils.attach(hand, scope.scene, scope.camera);
+                    
+                    new TWEEN.Tween(hand.rotation)
+                    .to({x: -1, y: 0.18, z: -0.2}, 400)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .start();
+
+                    new TWEEN.Tween(hand.position)
+                    .to({x: oldPos.x, y: oldPos.y, z: oldPos.z}, 400)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .onComplete(function() {
+                        scope.labGuide.nextInteractiveStep();
+                    })
+                    .start();
+                })
+                .start();
+            })
+            .start();
+        })
+        .start();
     }
 
     function useStirringRod() {
